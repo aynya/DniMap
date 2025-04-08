@@ -4,7 +4,7 @@ export const calculateConnectionPoints = (
     nodes: Record<string, Node>,
     connection: string
 ): [number, number, number, number] => {
-    const [fromId, toId] = connection.split('-')
+    const [fromId, toId] = connection.split('---')
     const fromNode = nodes[fromId]
     const toNode = nodes[toId]
     if(!fromNode || !toNode) return [0, 0, 0, 0]

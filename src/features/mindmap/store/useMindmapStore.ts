@@ -45,7 +45,7 @@ export const useMindmapStore = create<State & { actions: Actions }>()(
                     if (parentId) {
                         console.log(parentId)
                         state.nodes[parentId].children.push(newNode.id);
-                        state.connections.push(`${parentId}-${newNode.id}`);
+                        state.connections.push(`${parentId}---${newNode.id}`);
                     }
                 });
             },
@@ -57,7 +57,7 @@ export const useMindmapStore = create<State & { actions: Actions }>()(
 
                     // 清理所有关联连接
                     state.connections = state.connections.filter(conn => {
-                        const [from, to] = conn.split('-')
+                        const [from, to] = conn.split('---')
                         return from !== id && to !== id
                     })
 
@@ -86,8 +86,8 @@ export const useMindmapStore = create<State & { actions: Actions }>()(
             // 创建连接线
             createConnection: (parentId, childId) => {
                 set((state) => {
-                    if (!state.connections.includes(`${parentId}-${childId}`)) {
-                        state.connections.push(`${parentId}-${childId}`);
+                    if (!state.connections.includes(`${parentId}---${childId}`)) {
+                        state.connections.push(`${parentId}---${childId}`);
                     }
                 });
             },
