@@ -1,10 +1,10 @@
-// src/features/mindmap/components/MindmapCanvas.tsx
 import { Stage, Layer, Group, Rect, Text } from 'react-konva'
-import { useState, memo, useRef } from 'react'
+import { useState, memo, useRef, useCallback } from 'react'
 import { useMindmapStore, type Node as MindmapNode } from '../store/useMindmapStore'
 import TextEditor from './TextEditor'
 import ConnectionRenderer from './ConnectionRenderer'
 import { KonvaEventObject } from 'konva/lib/Node'
+import Konva from 'konva';
 
 const Node = memo(({ node }: { node: MindmapNode }) => {
     const [isEditing, setIsEditing] = useState(false);
@@ -118,19 +118,121 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
     );
 });
 
-export const MindmapCanvas = () => {
-    const nodes = useMindmapStore(state => state.nodes)
+const InfiniteCanvas = () => {
+    const nodes = useMindmapStore((state) => state.nodes);
+    const [viewportPos, setViewportPos] = useState({ x: 0, y: 0 });
+    const dragStartPos = useRef({ x: 0, y: 0 });
+    const stageRef = useRef<Konva.Stage | null>(null); // 引用 Stage 实例
+
+    // 处理画布拖拽
+    const handleDragStart = useCallback((e: KonvaEventObject<DragEvent>) => {
+        dragStartPos.current = {
+            x: e.target.x(),
+            y: e.target.y(),
+        };
+    }, []);
+
+    const handleDragMove = useCallback((e: KonvaEventObject<DragEvent>) => {
+        const dx = e.target.x() - dragStartPos.current.x;
+        const dy = e.target.y() - dragStartPos.current.y;
+
+        setViewportPos((prev) => ({
+            x: prev.x + dx,
+            y: prev.y + dy,
+        }));
+
+        dragStartPos.current = {
+            x: e.target.x(),
+            y: e.target.y(),
+        };
+    }, []);
+
+    // 处理鼠标滚轮缩放
+    const handleWheel = useCallback((e: KonvaEventObject<WheelEvent>) => {
+        e.evt.preventDefault();
+
+        const stage = stageRef.current;
+        if (!stage) return;
+
+        const oldScale = stage.scaleX(); // 获取当前缩放比例
+        const pointer = stage.getPointerPosition();
+        if (!pointer) return;
+
+        const mousePointTo = {
+            x: (pointer.x - stage.x()) / oldScale,
+            y: (pointer.y - stage.y()) / oldScale,
+        };
+
+        // 判断缩放方向
+        let direction = e.evt.deltaY > 0 ? 1 : -1;
+
+        // 如果按住 Ctrl 键，反转方向
+        if (e.evt.ctrlKey) {
+            direction = -direction;
+        }
+
+        const scaleBy = 1.2; // 每次缩放的比例
+        let newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
+
+        // 限制缩放范围在 20% 到 400%
+        newScale = Math.max(0.2, Math.min(4, newScale));
+
+        // 更新缩放比例
+        stage.scale({ x: newScale, y: newScale });
+
+        // 计算新的视口位置
+        const newPos = {
+            x: pointer.x - mousePointTo.x * newScale,
+            y: pointer.y - mousePointTo.y * newScale,
+        };
+
+        stage.position(newPos);
+    }, []);
 
     return (
-        <Stage width={window.innerWidth} height={window.innerHeight}>
-            <Layer name="connection-layer">
-                <ConnectionRenderer />
-            </Layer>
-            <Layer>
-                {Object.values(nodes).map((node) => (
-                    <Node key={node.id} node={node} />
-                ))}
-            </Layer>
-        </Stage>
+        <div className="relative h-full w-full">
+            <Stage
+                ref={stageRef}
+                width={window.innerWidth}
+                height={window.innerHeight}
+                x={0}
+                y={0}
+                draggable={false}
+                onWheel={handleWheel}
+            >
+                <Layer>
+                    {/* 可拖拽背景层 */}
+                    <Rect
+                        width={window.innerWidth * 20}
+                        height={window.innerWidth * 20}
+                        x={-window.innerWidth * 10 + viewportPos.x}
+                        y={-window.innerHeight * 10 + viewportPos.y}
+                        fill="#f8fafc"
+                        draggable
+                        onDragStart={handleDragStart}
+                        onDragMove={handleDragMove}
+                    />
+
+                    {/* 内容容器 */}
+                    <Group x={viewportPos.x} y={viewportPos.y}>
+                        {/* 连接线层 */}
+                        <ConnectionRenderer />
+
+                        {/* 节点层 */}
+                        {Object.values(nodes).map((node) => (
+                            <Node key={node.id} node={node} />
+                        ))}
+                    </Group>
+                </Layer>
+            </Stage>
+        </div>
+    );
+};
+
+export const MindmapCanvas = () => {
+    return (
+        <div className="h-screen w-screen overflow-hidden">
+            <InfiniteCanvas />
+        </div>
     )
 }
