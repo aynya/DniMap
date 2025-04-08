@@ -11,7 +11,6 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
     const { actions } = useMindmapStore();
     const [tempPosition, setTempPosition] = useState(node.position);
     const refId = useRef<number>(0);
-
     /**
      * 处理节点拖动过程中的位置更新。
      * 
@@ -120,32 +119,9 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
 
 const InfiniteCanvas = () => {
     const nodes = useMindmapStore((state) => state.nodes);
-    const [viewportPos, setViewportPos] = useState({ x: 0, y: 0 });
-    const dragStartPos = useRef({ x: 0, y: 0 });
     const stageRef = useRef<Konva.Stage | null>(null); // 引用 Stage 实例
 
-    // 处理画布拖拽
-    const handleDragStart = useCallback((e: KonvaEventObject<DragEvent>) => {
-        dragStartPos.current = {
-            x: e.target.x(),
-            y: e.target.y(),
-        };
-    }, []);
 
-    const handleDragMove = useCallback((e: KonvaEventObject<DragEvent>) => {
-        const dx = e.target.x() - dragStartPos.current.x;
-        const dy = e.target.y() - dragStartPos.current.y;
-
-        setViewportPos((prev) => ({
-            x: prev.x + dx,
-            y: prev.y + dy,
-        }));
-
-        dragStartPos.current = {
-            x: e.target.x(),
-            y: e.target.y(),
-        };
-    }, []);
 
     // 处理鼠标滚轮缩放
     const handleWheel = useCallback((e: KonvaEventObject<WheelEvent>) => {
@@ -153,6 +129,7 @@ const InfiniteCanvas = () => {
 
         const stage = stageRef.current;
         if (!stage) return;
+        console.log(stage.x(), stage.y())
 
         const oldScale = stage.scaleX(); // 获取当前缩放比例
         const pointer = stage.getPointerPosition();
@@ -197,24 +174,13 @@ const InfiniteCanvas = () => {
                 height={window.innerHeight}
                 x={0}
                 y={0}
-                draggable={false}
+                draggable={true}
                 onWheel={handleWheel}
             >
                 <Layer>
-                    {/* 可拖拽背景层 */}
-                    <Rect
-                        width={window.innerWidth * 20}
-                        height={window.innerWidth * 20}
-                        x={-window.innerWidth * 10 + viewportPos.x}
-                        y={-window.innerHeight * 10 + viewportPos.y}
-                        fill="#f8fafc"
-                        draggable
-                        onDragStart={handleDragStart}
-                        onDragMove={handleDragMove}
-                    />
 
                     {/* 内容容器 */}
-                    <Group x={viewportPos.x} y={viewportPos.y}>
+                    <Group>
                         {/* 连接线层 */}
                         <ConnectionRenderer />
 
