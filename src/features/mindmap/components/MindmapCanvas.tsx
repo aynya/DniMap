@@ -120,7 +120,7 @@ const InfiniteCanvas = () => {
                         {/* 内容容器 */}
                         <Group >
                             {/* 连接线层 */}
-                            <ConnectionRenderer />
+                            <ConnectionRenderer nodeId='root'/>
 
                             <TreeNodeComponent nodeId="root" />
 

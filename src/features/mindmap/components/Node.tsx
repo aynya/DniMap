@@ -8,8 +8,8 @@ import Konva from 'konva'
 
 const Node = memo(({ node }: { node: MindmapNode }) => {
     const [isHovered, setIsHovered] = useState(false);
+    const [isAddButtonVisible, setIsAddButtonVisible] = useState(false);
     const { actions } = useMindmapStore();
-    console.log(node.size[0], node.size[1])
 
     // 测量文本尺寸
     const measureText = (text: string): [number, number] => {
@@ -18,14 +18,14 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
             text: text
         })
         return [
-            tempText.width() + 40, 
+            tempText.width() + 40,
             tempText.height() + 40,
         ];
     };
 
     useEffect(() => {
-            const [width, height] = measureText(node.text);
-            actions.updateNodeSize(node.id, [width, height]);
+        const [width, height] = measureText(node.text);
+        actions.updateNodeSize(node.id, [width, height]);
     }, [])
 
     // 创建并显示 DOM 输入框
@@ -109,13 +109,42 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
         actions.setNodePosition(node.id, [newPosX, newPosY]); // 更新节点位置
     };
 
+    const handleClick = () => {
+        console.log("handleClick")
+        if (node.collapsed) return; // 如果节点被折叠，不显示添加按钮
+        setIsHovered(false)
+        setIsAddButtonVisible(true)
+    }
+    const handleMouseEnter = () => {
+        console.log("handleMouseEnter")
+        setIsHovered(true)
+    }
+    const handleMouseLeave = () => {
+        console.log("handleMouseLeave")
+        setIsHovered(false)
+        setIsAddButtonVisible(false)
+    }
+
+    const addText = new Konva.Text({
+        fontSize: 16,
+        text: "+"
+    })
+    const addSize = [addText.width(), addText.height()]
+
+    const minusText = new Konva.Text({
+        fontSize: 16,
+        text: "-"
+    })
+    const minusSize = [minusText.width(), minusText.height()]
+
     return (
         <Group
             draggable={true} // 启用拖拽功能
             x={node.position[0]}
             y={node.position[1]}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
+            onClick={handleClick}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
             onDragEnd={handleDragEnd} // 拖动结束时触发
         >
             {/* 节点主体 */}
@@ -138,56 +167,58 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
             />
 
             {/* 右侧操作按钮 */}
-            {!node.collapsed && (
-                <Group x={node.size[0] + 10} y={node.size[1] / 2 - 15}>
+            {isAddButtonVisible && (
+                <Group x={node.size[0]} y={node.size[1] / 2} onClick={(e) => {
+                    e.cancelBubble = true;
+                    actions.createNode(node.id, [
+                        node.position[0] + node.size[0] + 80,
+                        node.position[1],
+                    ]);
+                }}>
                     <Circle
-                        radius={15}
+                        radius={10}
                         fill="#4f46e5"
-                        onClick={(e) => {
-                            e.cancelBubble = true;
-                            actions.createNode(node.id, [
-                                node.position[0] + node.size[0] + 80,
-                                node.position[1],
-                            ]);
-                        }}
+
                     />
-                    <Text text="+" fontSize={20} fill="white" x={-6} y={-10} />
+                    <Text text="+" fontSize={16} fill="white" x={-addSize[0] / 2} y={-addSize[1] / 2 + 1} />
                 </Group>
             )}
 
             {/* 折叠/展开按钮 */}
             {isHovered && (
-                <Group x={node.size[0] - 30} y={-25}>
+                <Group x={node.size[0]} y={node.size[1] / 2} onClick={(e) => {
+                    e.cancelBubble = true;
+                    if (node.children.length === 0) return; // 如果没有子节点，不显示折叠/展开按钮
+                    actions.toggleCollapse(node.id);
+                }}>
                     <Circle
-                        radius={12}
+                        radius={10}
                         fill={node.collapsed ? "#10b981" : "#ef4444"}
-                        onClick={(e) => {
-                            e.cancelBubble = true;
-                            actions.toggleCollapse(node.id);
-                        }}
                     />
                     <Text
                         text={node.collapsed ? "+" : "-"}
                         fontSize={16}
                         fill="white"
-                        x={-5}
-                        y={-10}
+                        x={node.collapsed ? -addSize[0] / 2 : -minusSize[0] / 2}
+                        y={node.collapsed ? -addSize[1] / 2 + 1 : -minusSize[1] / 2}
                     />
-                    {node.collapsed && node.children.length > 0 && (
-                        <Group x={25} y={-10}>
-                            <Rect
-                                width={30}
-                                height={20}
-                                fill="#4f46e5"
-                                cornerRadius={4}
-                                onClick={(e) => {
-                                    e.cancelBubble = true;
-                                    actions.toggleCollapse(node.id);
-                                }}
-                            />
-                            <Text text={`${node.children.length}`} fontSize={12} fill="white" x={10} y={4} />
-                        </Group>
-                    )}
+
+                </Group>
+            )}
+
+            {node.collapsed && node.children.length > 0 && (
+                <Group x={-30 / 2} y={-10}>
+                    <Rect
+                        width={30}
+                        height={20}
+                        fill="#4f46e5"
+                        cornerRadius={4}
+                        onClick={(e) => {
+                            e.cancelBubble = true;
+                            actions.toggleCollapse(node.id);
+                        }}
+                    />
+                    <Text text={`${node.children.length}`} fontSize={12} width={30} height={20} fill="white" align="center" verticalAlign="middle" />
                 </Group>
             )}
         </Group>
