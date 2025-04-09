@@ -1,10 +1,8 @@
 // src/features/mindmap/components/Toolbar.tsx
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import {useMindmapStore} from '../store/useMindmapStore'
 import { exportAsImage, exportAsJSON } from '../../../lib/exporters'
 
 export const Toolbar = () => {
-  const { actions } = useMindmapStore()
   
   return (
     <div className="fixed top-4 left-4 flex gap-2">
@@ -30,13 +28,6 @@ export const Toolbar = () => {
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
-
-      <button 
-        className="px-4 py-2 bg-blue-500 text-white rounded-lg"
-        onClick={() => actions.createNode()}
-      >
-        新建节点
-      </button>
     </div>
   )
 }

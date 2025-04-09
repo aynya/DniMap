@@ -18,7 +18,7 @@ export type State = {
 }
 
 export type Actions = {
-    createNode: (parentId?: string) => void;
+    createNode: (parentId: string, position: [number, number]) => void;
     deleteNode: (id: string) => void;
     updateNodeText: (id: string, text: string) => void;
     setNodePosition: (id: string, position: [number, number]) => void;
@@ -27,17 +27,23 @@ export type Actions = {
 
 export const useMindmapStore = create<State & { actions: Actions }>()(
     immer((set) => ({
-        nodes: {},
+        nodes: {
+            root: {
+                id: 'root',
+                text: '根节点',
+                position: [window.innerWidth / 4, window.innerHeight / 2 - 30],
+                children: [],
+            }
+        },
         connections: [],
         selectedNodeId: null,
         actions: {
             // 创建节点
-            createNode: (parentId) => {
-                console.log(parentId)
+            createNode: (parentId, position) => {
                 const newNode = {
                     id: nanoid(),
                     text: '新节点',
-                    position: [0, 0] as [number, number],
+                    position: position,
                     children: [],
                 }
                 set((state) => {
