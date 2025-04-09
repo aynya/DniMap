@@ -1,26 +1,32 @@
-import { memo, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { Group, Rect, Text, Circle } from "react-konva";
 import { useMindmapStore } from "../store/useMindmapStore";
 import { Node as MindmapNode } from "../store/useMindmapStore";
 import { KonvaEventObject } from 'konva/lib/Node'
+import Konva from 'konva'
 
 
 const Node = memo(({ node }: { node: MindmapNode }) => {
     const [isHovered, setIsHovered] = useState(false);
     const { actions } = useMindmapStore();
+    console.log(node.size[0], node.size[1])
 
-    // 自适应尺寸逻辑
+    // 测量文本尺寸
     const measureText = (text: string): [number, number] => {
-        const lines = text.split("\n");
-        console.log(lines)
-        const lineHeight = 20;
-        const maxWidth = Math.max(...lines.map((line) => line.length * 10));
-        console.log(maxWidth)
+        const tempText = new Konva.Text({
+            fontSize: 16,
+            text: text
+        })
         return [
-            Math.max(200, maxWidth + 40), // 最小宽度200
-            Math.max(60, lines.length * lineHeight + 40),
+            tempText.width() + 40, 
+            tempText.height() + 40,
         ];
     };
+
+    useEffect(() => {
+            const [width, height] = measureText(node.text);
+            actions.updateNodeSize(node.id, [width, height]);
+    }, [])
 
     // 创建并显示 DOM 输入框
     const handleDoubleClick = (e: KonvaEventObject<MouseEvent>) => {
@@ -50,18 +56,18 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
         textarea.style.width = `${node.size[0] * scale}px`;
         textarea.style.height = `${node.size[1] * scale}px`;
         textarea.style.fontSize = `${16 * scale}px`;
-        textarea.style.border = "none";
-        textarea.style.padding = "8px";
+        textarea.style.border = "2px solid #4f46e5"; // 复刻 Rect 的 stroke
+        textarea.style.borderRadius = "8px"; // 复刻 Rect 的 cornerRadius
+        textarea.style.padding = "20px"; // 复刻 Text 的 padding
         textarea.style.margin = "0px";
         textarea.style.overflow = "hidden";
-        textarea.style.background = "#ffffff";
+        textarea.style.background = "#ffffff"; // 复刻 Rect 的 fill
         textarea.style.outline = "none";
         textarea.style.resize = "none";
         textarea.style.wordBreak = "break-word";
-        textarea.style.fontFamily = "Arial, sans-serif";
+        textarea.style.fontFamily = "Arial, sans-serif"; // 复刻 Text 的 fontFamily
         textarea.style.transformOrigin = "left top";
-        textarea.style.textAlign = "center";
-        textarea.style.color = "#000000";
+        textarea.style.color = "#000000"; // 复刻 Text 的颜色
         textarea.focus();
 
         /**
@@ -79,6 +85,12 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
             }
         });
 
+        textarea.addEventListener("input", () => {
+            const [width, height]: [number, number] = measureText(textarea.value);
+            textarea.style.width = `${width}px`;
+            textarea.style.height = `${height}px`;
+        })
+
         // 失焦时保存文本
         textarea.addEventListener("blur", () => {
             const newText = textarea.value;
@@ -91,6 +103,7 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
 
     // 拖动结束时更新节点位置
     const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
+        console.log("handleDragEnd")
         const newPosX = e.target.x();
         const newPosY = e.target.y();
         actions.setNodePosition(node.id, [newPosX, newPosY]); // 更新节点位置
@@ -121,8 +134,6 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
                 padding={20}
                 width={node.size[0]}
                 height={node.size[1]}
-                align="center"
-                verticalAlign="middle"
                 onDblClick={handleDoubleClick} // 触发编辑模式
             />
 

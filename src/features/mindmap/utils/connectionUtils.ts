@@ -10,12 +10,12 @@ export const calculateConnectionPoints = (
     if(!fromNode || !toNode) return [0, 0, 0, 0]
 
     // 开始的坐标，节点的右侧中心点
-    const startX = fromNode.position[0] + 200
-    const startY = fromNode.position[1] + 30
+    const startX = fromNode.position[0] + fromNode.size[0]
+    const startY = fromNode.position[1] + fromNode.size[1] / 2
 
     // 结束的坐标，节点的左侧中心点
     const endX = toNode.position[0]
-    const endY = toNode.position[1] + 30
+    const endY = toNode.position[1] + toNode.size[1] / 2
 
     return [startX, startY, endX, endY]
 }
