@@ -5,6 +5,7 @@ import TextEditor from './TextEditor'
 import ConnectionRenderer from './ConnectionRenderer'
 import { KonvaEventObject } from 'konva/lib/Node'
 import Konva from 'konva';
+import { gsap } from 'gsap';
 
 const Node = memo(({ node }: { node: MindmapNode }) => {
     const [isEditing, setIsEditing] = useState(false);
@@ -121,7 +122,33 @@ const InfiniteCanvas = () => {
     const nodes = useMindmapStore((state) => state.nodes);
     const stageRef = useRef<Konva.Stage | null>(null); // 引用 Stage 实例
 
+    // 处理 Stage 拖动
+    const handleStageDragMove = useCallback((e: KonvaEventObject<DragEvent>) => {
+        const stage = stageRef.current;
+        if (!stage) return;
 
+        // 获取当前 Stage 的位置
+        const newX = stage.x();
+        const newY = stage.y();
+
+        console.log('Stage Drag Move:', newX, newY, e);
+
+        // 如果需要，可以在这里更新应用状态
+    }, []);
+
+    const handleStageDragEnd = useCallback((e: KonvaEventObject<DragEvent>) => {
+        const stage = stageRef.current;
+        if (!stage) return;
+
+        // 获取最终的 Stage 位置
+        const finalX = stage.x();
+        const finalY = stage.y();
+
+        console.log('Stage Drag End:', finalX, finalY, e);
+
+        // 如果需要，可以在这里更新应用状态
+    }, []);
+    
 
     // 处理鼠标滚轮缩放
     const handleWheel = useCallback((e: KonvaEventObject<WheelEvent>) => {
@@ -129,10 +156,12 @@ const InfiniteCanvas = () => {
 
         const stage = stageRef.current;
         if (!stage) return;
-        console.log(stage.x(), stage.y())
+        // console.log(stage.x(), stage.y())
+
 
         const oldScale = stage.scaleX(); // 获取当前缩放比例
         const pointer = stage.getPointerPosition();
+        console.log(pointer)
         if (!pointer) return;
 
         const mousePointTo = {
@@ -148,7 +177,7 @@ const InfiniteCanvas = () => {
             direction = -direction;
         }
 
-        const scaleBy = 1.2; // 每次缩放的比例
+        const scaleBy = 1.1; // 每次缩放的比例
         let newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
 
         // 限制缩放范围在 20% 到 400%
@@ -163,6 +192,7 @@ const InfiniteCanvas = () => {
             y: pointer.y - mousePointTo.y * newScale,
         };
 
+
         stage.position(newPos);
     }, []);
 
@@ -176,6 +206,8 @@ const InfiniteCanvas = () => {
                 y={0}
                 draggable={true}
                 onWheel={handleWheel}
+                onDragMove={handleStageDragMove} // 添加拖动移动事件
+                onDragEnd={handleStageDragEnd}   // 添加拖动结束事件
             >
                 <Layer>
 
