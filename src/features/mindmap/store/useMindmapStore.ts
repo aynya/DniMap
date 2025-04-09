@@ -9,6 +9,8 @@ export interface Node {
     text: string;
     position: [number, number];
     children: string[];
+    size: [number, number]; // 新增尺寸字段 [width, height]
+    collapsed: boolean;     // 新增折叠状态
 }
 
 export type State = {
@@ -23,6 +25,8 @@ export type Actions = {
     updateNodeText: (id: string, text: string) => void;
     setNodePosition: (id: string, position: [number, number]) => void;
     createConnection: (parentId: string, childId: string) => void;
+    toggleCollapse: (id: string) => void;
+    updateNodeSize: (id: string, size: [number, number]) => void;
 }
 
 export const useMindmapStore = create<State & { actions: Actions }>()(
@@ -33,6 +37,8 @@ export const useMindmapStore = create<State & { actions: Actions }>()(
                 text: '根节点',
                 position: [window.innerWidth / 4, window.innerHeight / 2 - 30],
                 children: [],
+                size: [200, 60], // 默认宽高
+                collapsed: false, // 默认展开
             }
         },
         connections: [],
@@ -45,6 +51,8 @@ export const useMindmapStore = create<State & { actions: Actions }>()(
                     text: '新节点',
                     position: position,
                     children: [],
+                    size: [200, 60] as [number, number], // 默认宽高
+                    collapsed: false, // 默认展开
                 }
                 set((state) => {
                     state.nodes[newNode.id] = newNode;
@@ -94,6 +102,21 @@ export const useMindmapStore = create<State & { actions: Actions }>()(
                 set((state) => {
                     if (!state.connections.includes(`${parentId}---${childId}`)) {
                         state.connections.push(`${parentId}---${childId}`);
+                    }
+                });
+            },
+            // 切换节点折叠状态
+            toggleCollapse: (id: string) => {
+                set((state) => {
+                    if(state.nodes[id]) {
+                        state.nodes[id].collapsed = !state.nodes[id].collapsed
+                    }
+                });
+            },
+            updateNodeSize: (id: string, size: [number, number]) => {
+                set((state) => {
+                    if(state.nodes[id]) {
+                        state.nodes[id].size = size
                     }
                 });
             },

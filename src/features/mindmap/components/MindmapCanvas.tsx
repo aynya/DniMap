@@ -1,97 +1,30 @@
-import { Stage, Layer, Group, Rect, Text } from 'react-konva'
-import { useState, memo, useRef, useCallback } from 'react'
-import { useMindmapStore, type Node as MindmapNode } from '../store/useMindmapStore'
-import TextEditor from './TextEditor'
+import { Stage, Layer, Group } from 'react-konva'
+import { useRef, useCallback, Fragment } from 'react'
+import { useMindmapStore } from '../store/useMindmapStore'
+import Node from './Node'
 import ConnectionRenderer from './ConnectionRenderer'
 import { KonvaEventObject } from 'konva/lib/Node'
 import Konva from 'konva';
 
-const Node = memo(({ node }: { node: MindmapNode }) => {
-    const [isEditing, setIsEditing] = useState(false);
-    const { actions } = useMindmapStore();
-    const [tempPosition, setTempPosition] = useState(node.position);
-    const refId = useRef<number>(0);
-    const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
-        if (refId.current) {
-            cancelAnimationFrame(refId.current)
-        }
-        refId.current = requestAnimationFrame(() => {
-            const newX = e.target.x();
-            const newY = e.target.y();
-            // 更新临时位置
-            setTempPosition([newX, newY]);
-            // 更新节点位置
-            actions.setNodePosition(node.id, [newX, newY]);
-        })
-    };
-    const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
-        const newX = e.target.x();
-        const newY = e.target.y();
-        // 更新节点位置
-        useMindmapStore.getState().actions.setNodePosition(node.id, [newX, newY]);
-        setTempPosition([newX, newY])
+const TreeNodeComponent = ({ nodeId }: { nodeId: string }) => {
+    const node = useMindmapStore(state => state.nodes[nodeId]);
+    const childIds = node.children;
 
-        // 获取所有节点
-        const allNodes = useMindmapStore.getState().nodes;
-
-        // 计算当前节点的左中点
-        const leftMidPoint = [newX, newY + 30]; // 高度的一半是 60 / 2 = 30
-
-        // 遍历所有其他节点，检查是否有符合条件的右中点
-        Object.values(allNodes).forEach((otherNode) => {
-            if (otherNode.id !== node.id) {
-                // 计算其他节点的右中点
-                const rightMidPoint = [
-                    otherNode.position[0] + 200, // 父节点宽度为 200
-                    otherNode.position[1] + 30,  // 父节点高度的一半
-                ];
-
-                // 计算两点之间的距离
-                const distance = Math.sqrt(
-                    Math.pow(leftMidPoint[0] - rightMidPoint[0], 2) +
-                    Math.pow(leftMidPoint[1] - rightMidPoint[1], 2)
-                );
-
-                // 如果距离小于某个阈值（例如 20 像素），则生成连接线
-                if (distance < 20) {
-                    console.log('连接线', node.id, otherNode.id)
-                    useMindmapStore.getState().actions.createConnection(otherNode.id, node.id);
-                }
-            }
-        });
-    };
+    if (!node) return null;
 
     return (
-        <Group
-            x={tempPosition[0]}
-            y={tempPosition[1]}
-            draggable
-            onDragEnd={handleDragEnd}
-            onDragMove={handleDragMove}
-        >
-            <Rect
-                width={200}
-                height={60}
-                fill="#ffffff"
-                stroke="#4f46e5"
-                cornerRadius={8}
-            />
-            {isEditing ? (
-                <TextEditor node={node} onBlur={() => setIsEditing(false)} />
-            ) : (
-                <Text
-                    text={node.text}
-                    fontSize={16}
-                    padding={10}
-                    onClick={() => setIsEditing(true)}
-                />
-            )}
+        <Group>
+            <Node node={node} />
+            {!node.collapsed && childIds.map(childId => (
+                <Fragment key={childId}>
+                    <TreeNodeComponent nodeId={childId} />
+                </Fragment>
+            ))}
         </Group>
     );
-});
+};
 
 const InfiniteCanvas = () => {
-    const nodes = useMindmapStore((state) => state.nodes);
     const stageRef = useRef<Konva.Stage | null>(null); // 引用 Stage 实例
 
     // 处理 Stage 拖动
@@ -120,15 +53,14 @@ const InfiniteCanvas = () => {
 
         // 如果需要，可以在这里更新应用状态
     }, []);
-    
+
 
     // 处理鼠标滚轮缩放
     const handleWheel = useCallback((e: KonvaEventObject<WheelEvent>) => {
         e.evt.preventDefault();
-
         const stage = stageRef.current;
+        console.log(stage)
         if (!stage) return;
-        // console.log(stage.x(), stage.y())
 
 
         const oldScale = stage.scaleX(); // 获取当前缩放比例
@@ -170,31 +102,32 @@ const InfiniteCanvas = () => {
 
     return (
         <div className="relative h-full w-full">
-            <Stage
-                ref={stageRef}
-                width={window.innerWidth}
-                height={window.innerHeight}
-                x={0}
-                y={0}
-                draggable={true}
-                onWheel={handleWheel}
-                onDragMove={handleStageDragMove} // 添加拖动移动事件
-                onDragEnd={handleStageDragEnd}   // 添加拖动结束事件
-            >
-                <Layer>
+            <div id="konva-container">
+                <Stage
+                    ref={stageRef}
+                    width={window.innerWidth}
+                    height={window.innerHeight}
+                    container="konva-container"
+                    x={0}
+                    y={0}
+                    draggable={true}
+                    onWheel={handleWheel}
+                    onDragMove={handleStageDragMove} // 添加拖动移动事件
+                    onDragEnd={handleStageDragEnd}   // 添加拖动结束事件
+                >
+                    <Layer>
 
-                    {/* 内容容器 */}
-                    <Group>
-                        {/* 连接线层 */}
-                        <ConnectionRenderer />
+                        {/* 内容容器 */}
+                        <Group >
+                            {/* 连接线层 */}
+                            <ConnectionRenderer />
 
-                        {/* 节点层 */}
-                        {Object.values(nodes).map((node) => (
-                            <Node key={node.id} node={node} />
-                        ))}
-                    </Group>
-                </Layer>
-            </Stage>
+                            <TreeNodeComponent nodeId="root" />
+
+                        </Group>
+                    </Layer>
+                </Stage>
+            </div>
         </div>
     );
 };
