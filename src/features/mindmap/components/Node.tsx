@@ -13,6 +13,8 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
     const [isAddButtonVisible, setIsAddButtonVisible] = useState(false);
     const { actions } = useMindmapStore();
 
+    let theScale = 1
+
     // 测量文本尺寸
     const measureText = (text: string): [number, number] => {
         const tempText = new Konva.Text({
@@ -39,6 +41,7 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
 
         console.log(node.position[0], node.position[1], stage.x(), stage.y())
         const scale = stage.scaleX();
+        theScale = scale
         // 获取文本位置
         const areaPosition = {
             x: stage.x() + node.position[0] * scale,
@@ -89,8 +92,8 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
 
         textarea.addEventListener("input", () => {
             const [width, height]: [number, number] = measureText(textarea.value);
-            textarea.style.width = `${width}px`;
-            textarea.style.height = `${height}px`;
+            textarea.style.width = `${width * theScale}px`;
+            textarea.style.height = `${height * theScale}px`;
         })
 
         // 失焦时保存文本
@@ -100,6 +103,7 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
             actions.updateNodeText(node.id, newText); // 更新节点文本
             actions.updateNodeSize(node.id, measureText(newText)); // 更新节点尺寸
             removeTextarea(); // 移除 textarea
+            calculateTreeLayout()
         });
     };
 
