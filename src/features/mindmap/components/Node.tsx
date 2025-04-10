@@ -4,6 +4,7 @@ import { useMindmapStore } from "../store/useMindmapStore";
 import { Node as MindmapNode } from "../store/useMindmapStore";
 import { KonvaEventObject } from 'konva/lib/Node'
 import Konva from 'konva'
+import childrenSum from "../utils/childrensumUntils";
 
 
 const Node = memo(({ node }: { node: MindmapNode }) => {
@@ -218,7 +219,7 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
                             actions.toggleCollapse(node.id);
                         }}
                     />
-                    <Text text={`${node.children.length}`} fontSize={12} width={30} height={20} fill="white" align="center" verticalAlign="middle" />
+                    <Text text={`${childrenSum(node.id)}`} fontSize={12} width={30} height={20} fill="white" align="center" verticalAlign="middle" />
                 </Group>
             )}
         </Group>
