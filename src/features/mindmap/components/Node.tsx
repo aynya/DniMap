@@ -5,6 +5,7 @@ import { Node as MindmapNode } from "../store/useMindmapStore";
 import { KonvaEventObject } from 'konva/lib/Node'
 import Konva from 'konva'
 import childrenSum from "../utils/childrensumUntils";
+import calculateTreeLayout from "../utils/calculateTreeLayoutUntils";
 
 
 const Node = memo(({ node }: { node: MindmapNode }) => {
@@ -175,6 +176,7 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
                         node.position[0] + node.size[0] + 80,
                         node.position[1],
                     ]);
+                    calculateTreeLayout()
                 }}>
                     <Circle
                         radius={10}
