@@ -1,5 +1,5 @@
 import { Stage, Layer, Group } from 'react-konva'
-import { useRef, useCallback, Fragment, useEffect } from 'react'
+import { useRef, useCallback, Fragment } from 'react'
 import { useMindmapStore } from '../store/useMindmapStore'
 import Node from './Node'
 import ConnectionRenderer from './ConnectionRenderer'

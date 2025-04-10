@@ -1,4 +1,4 @@
-import { Arrow, Group } from 'react-konva'
+import { Group, Shape } from 'react-konva'
 import { useMindmapStore } from '../store/useMindmapStore'
 import { calculateConnectionPoints } from '../utils/connectionUtils'
 import { Fragment } from 'react'
@@ -22,12 +22,20 @@ const ConnectionRenderer = ({ nodeId }: RecursiveNodeProps) => {
                     const [startX, startY, endX, endY] = calculateConnectionPoints(nodes, `${node.id}---${childId}`)
                     return (
                         <Fragment key={`${node.id}---${childId}`}>
-                            <Arrow
-                                points={[startX, startY, endX, endY]}
-                                stroke="#94a3b8"
-                                strokeWidth={2}
-                                pointerLength={10}
-                                pointerWidth={10}
+                            <Shape
+                                sceneFunc={(ctx, shape) => {
+                                    ctx.beginPath()
+                                    ctx.moveTo(startX, startY)
+                                    ctx.quadraticCurveTo(
+                                        startX,
+                                        endY,
+                                        endX,
+                                        endY
+                                    )
+                                    ctx.fillStrokeShape(shape)
+                                }}
+                                stroke="blue"
+                                strokeWidth={2}             
                             />
                             <ConnectionRenderer nodeId={childId} />
                         </Fragment>
