@@ -1,97 +1,104 @@
 import { useMindmapStore } from '../store/useMindmapStore';
 
-// 辅助类型定义
 interface TreeNode {
   id: string;
-  position: [number, number]; // [x, y]
-  size: [number, number]; // [width, height]
-  children: string[]; // 子节点 ID 列表
-  collapsed: boolean; // 是否折叠
+  position: [number, number];
+  size: [number, number];
+  children: string[];
+  collapsed: boolean;
 }
 
-// 获取节点的宽度（水平方向）
-const getNodeWidth = (node: TreeNode): number => node.size[0];
+// 辅助函数
+const getNodeWidth = (node: TreeNode) => node.size[0];
+const getNodeHeight = (node: TreeNode) => node.size[1];
+const horizontalSpacing = 50;  // 父子节点水平间距
+const verticalSpacing = 30;    // 兄弟节点垂直间距
 
-// 获取节点的高度（垂直方向）
-const getNodeHeight = (node: TreeNode): number => node.size[1];
-
-// 计算两个节点的最小水平间距
-const getHorizontalSpacing = (): number => 50; // 固定水平间距
-
-// 计算两个节点的最小垂直间距
-const getVerticalSpacing = (): number => 20; // 固定垂直间距
-
-// 主函数：执行分层递归布局
 const calculateTreeLayout = () => {
   const { nodes } = useMindmapStore.getState();
-
-  // 调用分层递归布局函数
-  layoutNode('root', nodes, 0, 0);
+  const rootNode = nodes['root'];
+  
+  // 先计算所有节点的子树尺寸
+  const subtreeSizes = new Map<string, { width: number, height: number }>();
+  calculateSubtreeSize(rootNode.id, nodes, subtreeSizes);
+  
+  // 执行布局
+  layoutNode(rootNode.id, nodes, subtreeSizes, 0, 0);
 };
 
-// 分层递归布局函数
+// 核心修改：预计算子树尺寸
+const calculateSubtreeSize = (
+  nodeId: string,
+  nodes: Record<string, TreeNode>,
+  sizes: Map<string, { width: number, height: number }>
+): { width: number, height: number } => {
+  const node = nodes[nodeId];
+  
+  // 折叠状态或叶子节点
+  if (node.collapsed || node.children.length === 0) {
+    const size = { width: getNodeWidth(node), height: getNodeHeight(node) };
+    sizes.set(nodeId, size);
+    return size;
+  }
+
+  // 递归计算子节点尺寸
+  let totalChildHeight = 0;
+  let maxChildWidth = 0;
+  
+  node.children.forEach(childId => {
+    const childSize = calculateSubtreeSize(childId, nodes, sizes);
+    totalChildHeight += childSize.height;
+    maxChildWidth = Math.max(maxChildWidth, childSize.width);
+  });
+
+  // 计算总高度（包含间距）
+  const subtreeHeight = totalChildHeight + 
+                       (node.children.length - 1) * verticalSpacing;
+  
+  // 当前节点宽度 = 自身宽度 + 最大子节点宽度 + 水平间距
+  const subtreeWidth = getNodeWidth(node) + 
+                      maxChildWidth + 
+                      horizontalSpacing;
+
+  const totalHeight = Math.max(getNodeHeight(node), subtreeHeight);
+  sizes.set(nodeId, { width: subtreeWidth, height: totalHeight });
+  
+  return { width: subtreeWidth, height: totalHeight };
+};
+
+// 改进后的布局算法
 const layoutNode = (
   nodeId: string,
   nodes: Record<string, TreeNode>,
+  sizes: Map<string, { width: number, height: number }>,
   parentX: number,
   parentY: number
 ) => {
   const node = nodes[nodeId];
+  const nodeSize = sizes.get(nodeId)!;
+  
+  // 设置当前节点位置（垂直居中）
+  const currentX = parentX;
+  const currentY = parentY + nodeSize.height / 2 - getNodeHeight(node) / 2;
+  useMindmapStore.getState().actions.setNodePosition(nodeId, [currentX, currentY]);
 
-  // 如果是叶子节点或折叠状态，直接设置位置
-  if (node.children.length === 0 || node.collapsed) {
-    // 设置节点位置
-    useMindmapStore.getState().actions.setNodePosition(nodeId, [parentX, parentY]);
-    return;
-  }
+  // 折叠状态不处理子节点
+  if (node.collapsed) return;
 
-  // 遍历子节点并递归布局
-  let currentY = parentY - getTotalChildHeight(nodes, node) / 2;
-
-  node.children.forEach((childId) => {
-    const childNode = nodes[childId];
-
-    // 子节点的 X 坐标基于父节点的 X 坐标加上固定水平间距和父节点宽度
-    const childX = parentX + getHorizontalSpacing() + getNodeWidth(node);
-
-    // 子节点的 Y 坐标基于当前累积 Y 坐标和子树高度的一半
-    const childTreeHeight = getChildTreeHeight(nodes, childNode);
-    const childY = currentY + childTreeHeight / 2;
-
-    // 递归布局子节点
-    layoutNode(childId, nodes, childX, childY);
-
-    // 更新累积 Y 坐标，确保每个子节点的子树区域不重叠
-    currentY += childTreeHeight + getVerticalSpacing();
+  // 计算子节点起始位置
+  let childY = parentY;
+  node.children.forEach(childId => {
+    const childSize = sizes.get(childId)!;
+    
+    // 子节点水平位置
+    const childX = currentX + getNodeWidth(node) + horizontalSpacing;
+    
+    // 递归布局
+    layoutNode(childId, nodes, sizes, childX, childY);
+    
+    // 更新累积Y坐标（包含间距）
+    childY += childSize.height + verticalSpacing;
   });
-
-  // 设置父节点的位置
-  // 父节点的 Y 坐标位于所有子节点区域的垂直中心
-  useMindmapStore.getState().actions.setNodePosition(nodeId, [
-    parentX,
-    parentY,
-  ]);
 };
 
-// 计算一个节点的所有子节点的总高度（包括子树的高度）
-const getTotalChildHeight = (nodes: Record<string, TreeNode>, node: TreeNode): number => {
-  return node.children.reduce(
-    (acc, childId) => acc + getChildTreeHeight(nodes, nodes[childId]) + getVerticalSpacing(),
-    0
-  ) - getVerticalSpacing(); // 减去最后一个子节点的间距
-};
-
-// 计算一个节点的子树高度（包括自身高度和所有子节点的高度）
-const getChildTreeHeight = (nodes: Record<string, TreeNode>, node: TreeNode): number => {
-  if (node.children.length === 0 || node.collapsed) {
-    return getNodeHeight(node); // 叶子节点或折叠节点只返回自身高度
-  }
-  const totalChildHeight = node.children.reduce(
-    (acc, childId) => acc + getChildTreeHeight(nodes, nodes[childId]) + getVerticalSpacing(),
-    0
-  );
-  return getNodeHeight(node) + totalChildHeight;
-};
-
-// 导出主函数
 export default calculateTreeLayout;
