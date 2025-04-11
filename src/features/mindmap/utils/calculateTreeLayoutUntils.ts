@@ -17,6 +17,9 @@ const verticalSpacing = 30;    // 兄弟节点垂直间距
 const calculateTreeLayout = () => {
   const { nodes } = useMindmapStore.getState();
   const rootNode = nodes['root'];
+
+  const rootOffsetX = rootNode.position[0];
+  const rootOffsetY = rootNode.position[1];
   
   // 先计算所有节点的子树尺寸
   const subtreeSizes = new Map<string, { width: number, height: number }>();
@@ -24,6 +27,17 @@ const calculateTreeLayout = () => {
   
   // 执行布局
   layoutNode(rootNode.id, nodes, subtreeSizes, 0, 0);
+
+  // 根据根节点位置，调整所有节点位置
+  // console.log('rootOffsetX:', rootOffsetX, 'rootOffsetY:', rootOffsetY, 'nodes:', nodes['root'].position)
+  const finalRoot = useMindmapStore.getState().nodes['root'];
+  const dx = finalRoot.position[0] - rootOffsetX;
+  const dy = finalRoot.position[1] - rootOffsetY;
+  const finalNodes = useMindmapStore.getState().nodes;
+  Object.values(finalNodes).forEach(node => {
+    const [x, y] = node.position;
+    useMindmapStore.getState().actions.setNodePosition(node.id, [x - dx, y - dy]);
+  });
 };
 
 // 核心修改：预计算子树尺寸
