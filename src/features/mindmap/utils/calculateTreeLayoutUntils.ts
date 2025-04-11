@@ -45,40 +45,52 @@ const layoutNode = (
     return;
   }
 
-  // 计算子节点的总高度和起始 Y 坐标
-  const totalChildHeight = node.children.reduce(
-    (acc, childId) => acc + getNodeHeight(nodes[childId]) + getVerticalSpacing(),
-    0
-  ) - getVerticalSpacing(); // 减去最后一个子节点的间距
-
-  // 子节点的起始 Y 坐标
-  const startY = parentY - totalChildHeight / 2;
-
   // 遍历子节点并递归布局
-  let currentY = startY;
+  let currentY = parentY - getTotalChildHeight(nodes, node) / 2;
+
   node.children.forEach((childId) => {
     const childNode = nodes[childId];
-    const childHeight = getNodeHeight(childNode);
 
     // 子节点的 X 坐标基于父节点的 X 坐标加上固定水平间距和父节点宽度
     const childX = parentX + getHorizontalSpacing() + getNodeWidth(node);
 
-    // 子节点的 Y 坐标基于当前累积 Y 坐标
-    const childY = currentY + childHeight / 2;
+    // 子节点的 Y 坐标基于当前累积 Y 坐标和子树高度的一半
+    const childTreeHeight = getChildTreeHeight(nodes, childNode);
+    const childY = currentY + childTreeHeight / 2;
 
     // 递归布局子节点
     layoutNode(childId, nodes, childX, childY);
 
-    // 更新累积 Y 坐标
-    currentY += childHeight + getVerticalSpacing();
+    // 更新累积 Y 坐标，确保每个子节点的子树区域不重叠
+    currentY += childTreeHeight + getVerticalSpacing();
   });
 
   // 设置父节点的位置
-  // 父节点的 Y 坐标位于子节点区域的垂直中心
+  // 父节点的 Y 坐标位于所有子节点区域的垂直中心
   useMindmapStore.getState().actions.setNodePosition(nodeId, [
     parentX,
     parentY,
   ]);
+};
+
+// 计算一个节点的所有子节点的总高度（包括子树的高度）
+const getTotalChildHeight = (nodes: Record<string, TreeNode>, node: TreeNode): number => {
+  return node.children.reduce(
+    (acc, childId) => acc + getChildTreeHeight(nodes, nodes[childId]) + getVerticalSpacing(),
+    0
+  ) - getVerticalSpacing(); // 减去最后一个子节点的间距
+};
+
+// 计算一个节点的子树高度（包括自身高度和所有子节点的高度）
+const getChildTreeHeight = (nodes: Record<string, TreeNode>, node: TreeNode): number => {
+  if (node.children.length === 0 || node.collapsed) {
+    return getNodeHeight(node); // 叶子节点或折叠节点只返回自身高度
+  }
+  const totalChildHeight = node.children.reduce(
+    (acc, childId) => acc + getChildTreeHeight(nodes, nodes[childId]) + getVerticalSpacing(),
+    0
+  );
+  return getNodeHeight(node) + totalChildHeight;
 };
 
 // 导出主函数

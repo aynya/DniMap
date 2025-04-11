@@ -177,7 +177,7 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
                 <Group x={node.size[0]} y={node.size[1] / 2} onClick={(e) => {
                     e.cancelBubble = true;
                     actions.createNode(node.id, [
-                        node.position[0] + node.size[0] + 80,
+                        node.position[0],
                         node.position[1],
                     ]);
                     calculateTreeLayout()
