@@ -197,6 +197,7 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
                     e.cancelBubble = true;
                     if (node.children.length === 0) return; // 如果没有子节点，不显示折叠/展开按钮
                     actions.toggleCollapse(node.id);
+                    calculateTreeLayout();
                 }}>
                     <Circle
                         radius={10}
