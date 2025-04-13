@@ -27,6 +27,7 @@ export type Actions = {
     createConnection: (parentId: string, childId: string) => void;
     toggleCollapse: (id: string) => void;
     updateNodeSize: (id: string, size: [number, number]) => void;
+    setNodePositions: (positions: { [id: string]: [number, number] }) => void;
 }
 
 export const useMindmapStore = create<State & { actions: Actions }>()(
@@ -108,16 +109,25 @@ export const useMindmapStore = create<State & { actions: Actions }>()(
             // 切换节点折叠状态
             toggleCollapse: (id: string) => {
                 set((state) => {
-                    if(state.nodes[id]) {
+                    if (state.nodes[id]) {
                         state.nodes[id].collapsed = !state.nodes[id].collapsed
                     }
                 });
             },
             updateNodeSize: (id: string, size: [number, number]) => {
                 set((state) => {
-                    if(state.nodes[id]) {
+                    if (state.nodes[id]) {
                         state.nodes[id].size = size
                     }
+                });
+            },
+            setNodePositions: (positions:  { [id: string]: [number, number] }) => {
+                set((state) => {
+                    Object.entries(positions).forEach(([id, pos]) => {
+                        if (state.nodes[id]) {
+                            state.nodes[id].position = pos;
+                        }
+                    });
                 });
             },
         }
