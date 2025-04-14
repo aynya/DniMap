@@ -20,21 +20,46 @@ const generateStage = () => {
             return null;
         }
 
-        // 计算所有节点的边界框
+        // 计算所有节点的边界框（只包含可见节点）
         let minX = Infinity,
             minY = Infinity,
             maxX = -Infinity,
             maxY = -Infinity;
 
-        Object.values(nodes).forEach((node) => {
+        const visibleNodes = new Set<string>(); // 存储可见节点的 ID
+
+        // 递归遍历节点树，收集可见节点
+        const traverseNodes = (nodeId: string) => {
+            const node = nodes[nodeId];
+            if (!node) return; // 如果节点不存在，则跳过
+
+            visibleNodes.add(nodeId); // 标记当前节点为可见
+
             const [x, y] = node.position;
             const [width, height] = node.size;
 
+            // 更新边界框
             minX = Math.min(minX, x);
             minY = Math.min(minY, y);
             maxX = Math.max(maxX, x + width);
             maxY = Math.max(maxY, y + height);
-        });
+
+            // 如果节点未折叠，递归处理子节点
+            if (!node.collapsed) {
+                node.children.forEach((childId) => traverseNodes(childId));
+            }
+        };
+        // 找到根节点并开始遍历
+        const rootNodes = Object.values(nodes).filter(
+            (node) => !connections.some((conn) => conn.endsWith(`---${node.id}`))
+        );
+        rootNodes.forEach((rootNode) => traverseNodes(rootNode.id));
+
+        // 如果没有可见节点，直接返回
+        if (visibleNodes.size === 0) {
+            console.error('没有可见节点可以导出');
+            return null;
+        }
 
         // 计算内容区域的宽高
         const contentWidth = maxX - minX;
@@ -54,8 +79,9 @@ const generateStage = () => {
         const tempLayer = new Konva.Layer();
         tempStage.add(tempLayer);
 
-        // 绘制节点
-        Object.values(nodes).forEach((node) => {
+        // 绘制可见节点
+        visibleNodes.forEach((nodeId) => {
+            const node = nodes[nodeId];
             const [x, y] = node.position;
             const [width, height] = node.size;
 
@@ -83,37 +109,33 @@ const generateStage = () => {
             tempLayer.add(text);
         });
 
-        // 绘制连接线
+        // 绘制可见连接线
         connections.forEach((conn) => {
             const [fromId, toId] = conn.split('---');
-            const fromNode = nodes[fromId];
-            const toNode = nodes[toId];
+            if (!visibleNodes.has(fromId) || !visibleNodes.has(toId)) return;
 
-            if (fromNode && toNode) {
-                const [startX, startY, endX, endY] = calculateConnectionPoints(
-                    nodes,
-                    conn
-                );
+            const [startX, startY, endX, endY] = calculateConnectionPoints(
+                nodes,
+                conn
+            );
 
-                const line = new Konva.Shape({
-                    sceneFunc: (ctx, shape) => {
-                        console.log(111111);
-                        ctx.beginPath();
-                        ctx.moveTo(startX - minX, startY - minY); // 调整位置
-                        ctx.quadraticCurveTo(
-                            startX - minX,
-                            endY - minY,
-                            endX - minX,
-                            endY - minY
-                        );
-                        ctx.fillStrokeShape(shape);
-                    },
-                    stroke: 'black',
-                    strokeWidth: 2,
-                });
+            const line = new Konva.Shape({
+                sceneFunc: (ctx, shape) => {
+                    ctx.beginPath();
+                    ctx.moveTo(startX - minX, startY - minY); // 调整位置
+                    ctx.quadraticCurveTo(
+                        startX - minX,
+                        endY - minY,
+                        endX - minX,
+                        endY - minY
+                    );
+                    ctx.fillStrokeShape(shape);
+                },
+                stroke: 'black',
+                strokeWidth: 2,
+            });
 
-                tempLayer.add(line);
-            }
+            tempLayer.add(line);
         });
 
         tempLayer.batchDraw(); // 强制绘制
