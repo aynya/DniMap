@@ -1,6 +1,6 @@
 // src/features/mindmap/components/Toolbar.tsx
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import { exportAsImage, exportAsJSON } from '../../../lib/exporters'
+import { exportAsPNG, exportAsJSON, exportAsSVG } from '../../../lib/exporters'
 
 export const Toolbar = () => {
   
@@ -21,9 +21,15 @@ export const Toolbar = () => {
             </DropdownMenu.Item>
             <DropdownMenu.Item
               className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-              onSelect={() => exportAsImage()}
+              onSelect={() => exportAsPNG()}
             >
-              导出图片
+              导出png
+            </DropdownMenu.Item>
+            <DropdownMenu.Item
+              className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              onSelect={() => exportAsSVG()}
+            >
+              导出svg
             </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
