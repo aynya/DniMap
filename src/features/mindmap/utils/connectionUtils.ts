@@ -9,10 +9,10 @@ export const calculateConnectionPoints = (
     const fromNode = nodes[fromId]
     const toNode = nodes[toId]
     const layoutStyle = useMindmapStore.getState().layoutStyle
-    if(!fromNode || !toNode) return [0, 0, 0, 0]
+    if (!fromNode || !toNode) return [0, 0, 0, 0]
     let startX = 0, startY = 0, endX = 0, endY = 0;
 
-    if(layoutStyle === 'left-to-right') {
+    if (layoutStyle === 'left-to-right') {
         // 开始的坐标，节点的右侧中心点
         startX = fromNode.position[0] + fromNode.size[0]
         startY = fromNode.position[1] + fromNode.size[1] / 2
@@ -26,6 +26,18 @@ export const calculateConnectionPoints = (
 
         endX = toNode.position[0] + toNode.size[0];
         endY = toNode.position[1] + toNode.size[1] / 2;
+    } else if (layoutStyle === 'center') {
+        if (toNode.direction === 'left') {
+            startX = fromNode.position[0];
+            startY = fromNode.position[1] + fromNode.size[1] / 2;
+            endX = toNode.position[0] + toNode.size[0];
+            endY = toNode.position[1] + toNode.size[1] / 2;
+        } else if(toNode.direction === 'right') {
+            startX = fromNode.position[0] + fromNode.size[0];
+            startY = fromNode.position[1] + fromNode.size[1] / 2;
+            endX = toNode.position[0];
+            endY = toNode.position[1] + toNode.size[1] / 2;
+        }
     }
 
     return [startX, startY, endX, endY]
