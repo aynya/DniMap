@@ -17,6 +17,7 @@ export type State = {
     nodes: Record<string, Node>;
     connections: string[];
     selectedNodeId: string | null;
+    layoutStyle: 'left-to-right' | 'right-to-left';
 }
 
 export type Actions = {
@@ -36,7 +37,7 @@ export const useMindmapStore = create<State & { actions: Actions }>()(
             root: {
                 id: 'root',
                 text: '根节点',
-                position: [window.innerWidth / 4, window.innerHeight / 2 - 30],
+                position: [window.innerWidth / 2, window.innerHeight / 2 - 30],
                 children: [],
                 size: [200, 60], // 默认宽高
                 collapsed: false, // 默认展开
@@ -44,6 +45,7 @@ export const useMindmapStore = create<State & { actions: Actions }>()(
         },
         connections: [],
         selectedNodeId: null,
+        layoutStyle: 'left-to-right', // 新增布局风格属性
         actions: {
             // 创建节点
             createNode: (parentId, position) => {

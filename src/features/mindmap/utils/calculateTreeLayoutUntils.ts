@@ -19,6 +19,7 @@ const verticalSpacing = 30;    // 兄弟节点垂直间距
  */
 const calculateTreeLayout = () => {
   const { nodes } = useMindmapStore.getState();
+  const layoutStyle = useMindmapStore.getState().layoutStyle;
   const rootNode = nodes['root'];
   const originalRootX = rootNode.position[0];
   const originalRootY = rootNode.position[1];
@@ -53,7 +54,12 @@ const calculateTreeLayout = () => {
     let childY = parentY;
     node.children.forEach(childId => {
       const childSize = subtreeSizes.get(childId)!;
-      const childX = currentX + getNodeWidth(node) + horizontalSpacing;
+      let childX = 0;
+      if(layoutStyle === 'left-to-right') {
+        childX = currentX + getNodeWidth(node) + horizontalSpacing;
+      } else if(layoutStyle === 'right-to-left') {
+        childX = currentX - getNodeWidth(nodes[childId]) - horizontalSpacing;
+      }
       layoutNode(childId, childX, childY);
       childY += childSize.height + verticalSpacing;
     });
@@ -120,48 +126,5 @@ const calculateSubtreeSize = (
   
   return { width: subtreeWidth, height: totalHeight };
 };
-
-/**
- * 递归设置每个节点的位置(前序遍历)
- * @param nodeId 当前节点的ID
- * @param nodes 所有节点对象
- * @param sizes 每个节点树尺寸的隐射
- * @param parentX 父节点的X坐标
- * @param parentY 父节点的Y坐标
- */
-// const layoutNode = (
-//   nodeId: string,
-//   nodes: Record<string, TreeNode>,
-//   sizes: Map<string, { width: number, height: number }>,
-//   parentX: number,
-//   parentY: number
-// ) => {
-//   const node = nodes[nodeId];
-//   const nodeSize = sizes.get(nodeId)!;
-  
-//   // 设置当前节点位置（根据该点的节点树的尺寸，垂直居中）
-//   const currentX = parentX;
-//   const currentY = parentY + nodeSize.height / 2 - getNodeHeight(node) / 2;
-//   useMindmapStore.getState().actions.setNodePosition(nodeId, [currentX, currentY]);
-
-//   // 折叠状态不处理子节点
-//   if (node.collapsed) return;
-
-//   // 计算子节点起始位置
-//   let childY = parentY;
-//   node.children.forEach(childId => {
-//     const childSize = sizes.get(childId)!;
-    
-//     // 子节点水平位置
-//     const childX = currentX + getNodeWidth(node) + horizontalSpacing;
-    
-//     // 递归布局
-//     layoutNode(childId, nodes, sizes, childX, childY);
-    
-//     // 更新累积Y坐标（包含间距）
-//     childY += childSize.height + verticalSpacing;
-//   });
-// };
-
 
 export default calculateTreeLayout;

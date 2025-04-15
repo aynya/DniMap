@@ -49,11 +49,7 @@ const generateStage = () => {
                 node.children.forEach((childId) => traverseNodes(childId));
             }
         };
-        // 找到根节点并开始遍历
-        const rootNodes = Object.values(nodes).filter(
-            (node) => !connections.some((conn) => conn.endsWith(`---${node.id}`))
-        );
-        rootNodes.forEach((rootNode) => traverseNodes(rootNode.id));
+        traverseNodes('root');
 
         // 如果没有可见节点，直接返回
         if (visibleNodes.size === 0) {
@@ -147,6 +143,10 @@ const generateStage = () => {
     }
 };
 
+/**
+ * 导出为 JSON 文件
+ * @returns void
+ */
 export const exportAsJSON = () => {
     const state = useMindmapStore.getState()
     const data = JSON.stringify({
@@ -201,6 +201,7 @@ export const exportAsPNG = () => {
 
 /**
  * 导出为 SVG
+ * @returns void
  */
 export const exportAsSVG = async () => {
     // 生成临时 Stage
