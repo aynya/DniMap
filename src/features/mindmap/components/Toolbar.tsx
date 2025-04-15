@@ -1,9 +1,7 @@
 // src/features/mindmap/components/Toolbar.tsx
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { exportAsPNG, exportAsJSON, exportAsSVG } from '../../../lib/exporters'
-import { useMindmapStore } from '../store/useMindmapStore'
-import calculateTreeLayout from '../utils/calculateTreeLayoutUntils'
-import calculateCenterLayout from '../utils/calculateCenterLayout'
+import {applyLayoutStyle} from '../utils/applyLayoutStyle'
 
 export const Toolbar = () => {
   return (
@@ -47,46 +45,19 @@ export const Toolbar = () => {
           <DropdownMenu.Content className="bg-white rounded-lg p-2 shadow-lg">
             <DropdownMenu.Item
               className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-              onSelect={() => {
-                useMindmapStore.setState({ layoutStyle: 'left-to-right' })
-                const updateChildrenDirections = useMindmapStore.getState().actions.updateChildrenDirections;
-                updateChildrenDirections();
-                calculateTreeLayout();
-
-
-                const nodes = useMindmapStore.getState().nodes;
-                console.log('节点:', nodes);
-              }}
+              onSelect={() => applyLayoutStyle('left-to-right')}
             >
               从左到右
             </DropdownMenu.Item>
             <DropdownMenu.Item
               className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-              onSelect={() => {
-                useMindmapStore.setState({ layoutStyle: 'right-to-left' })
-                const updateChildrenDirections = useMindmapStore.getState().actions.updateChildrenDirections;
-                updateChildrenDirections();
-                calculateTreeLayout();
-
-                const nodes = useMindmapStore.getState().nodes;
-                console.log('节点:', nodes);
-              }}
+              onSelect={() => applyLayoutStyle('right-to-left')}
             >
               从右到左
             </DropdownMenu.Item>
             <DropdownMenu.Item
               className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-              onSelect={ () => {
-                useMindmapStore.setState({ layoutStyle: 'center' })
-                const updateChildrenDirections = useMindmapStore.getState().actions.updateChildrenDirections;
-                updateChildrenDirections();
-                calculateCenterLayout();
-
-
-                const nodes = useMindmapStore.getState().nodes;
-                console.log('节点:', nodes);
-                
-              }}
+              onSelect={() => applyLayoutStyle('center')}
             >
               从中间到外
             </DropdownMenu.Item>

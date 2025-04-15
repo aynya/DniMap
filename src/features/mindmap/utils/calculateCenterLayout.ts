@@ -12,7 +12,7 @@ interface TreeNode {
 // 辅助函数
 const getNodeWidth = (node: TreeNode) => node.size[0];
 const getNodeHeight = (node: TreeNode) => node.size[1];
-const horizontalSpacing = 50;  // 父子节点水平间距
+const horizontalSpacing = 100;  // 父子节点水平间距
 const verticalSpacing = 30;    // 兄弟节点垂直间距
 
 /**

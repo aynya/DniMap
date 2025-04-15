@@ -6,7 +6,7 @@ import { KonvaEventObject } from 'konva/lib/Node'
 import Konva from 'konva'
 import childrenSum from "../utils/childrensumUntils";
 import calculateTreeLayout from "../utils/calculateTreeLayoutUntils";
-import calculateCenterLayout from "../utils/calculateCenterLayout";
+import {applyLayoutStyle} from "../utils/applyLayoutStyle";
 
 
 const Node = memo(({ node }: { node: MindmapNode }) => {
@@ -105,10 +105,7 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
             actions.updateNodeSize(node.id, measureText(newText)); // 更新节点尺寸
             removeTextarea(); // 移除 textarea
             if (layoutStyle === 'center') {
-                useMindmapStore.setState({ layoutStyle: 'center' })
-                const updateChildrenDirections = useMindmapStore.getState().actions.updateChildrenDirections;
-                updateChildrenDirections();
-                calculateCenterLayout();
+                applyLayoutStyle(layoutStyle)
             } else {
                 calculateTreeLayout();
             }
@@ -189,10 +186,7 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
                         node.position[1],
                     ]);
                     if (layoutStyle === 'center') {
-                        useMindmapStore.setState({ layoutStyle: 'center' })
-                        const updateChildrenDirections = useMindmapStore.getState().actions.updateChildrenDirections;
-                        updateChildrenDirections();
-                        calculateCenterLayout();
+                        applyLayoutStyle(layoutStyle)
                     } else {
                         calculateTreeLayout();
                     }
@@ -213,10 +207,7 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
                     if (node.children.length === 0) return; // 如果没有子节点，不显示折叠/展开按钮
                     actions.toggleCollapse(node.id);
                     if (layoutStyle === 'center') {
-                        useMindmapStore.setState({ layoutStyle: 'center' })
-                        const updateChildrenDirections = useMindmapStore.getState().actions.updateChildrenDirections;
-                        updateChildrenDirections();
-                        calculateCenterLayout();
+                        applyLayoutStyle(layoutStyle)
                     } else {
                         calculateTreeLayout();
                     }
