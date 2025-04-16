@@ -5,14 +5,15 @@ import { Node as MindmapNode } from "../store/useMindmapStore";
 import { KonvaEventObject } from 'konva/lib/Node'
 import Konva from 'konva'
 import childrenSum from "../utils/childrensumUntils";
-import calculateTreeLayout from "../utils/calculateTreeLayoutUntils";
 import {applyLayoutStyle} from "../utils/applyLayoutStyle";
 
 
 const Node = memo(({ node }: { node: MindmapNode }) => {
     const [isHovered, setIsHovered] = useState(false);
     const [isAddButtonVisible, setIsAddButtonVisible] = useState(false);
-    const { actions, layoutStyle } = useMindmapStore();
+    const actions = useMindmapStore((state) => state.actions);
+    const layoutStyle = useMindmapStore(state => state.layoutStyle)
+
 
     let theScale = 1
 
@@ -104,11 +105,7 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
             actions.updateNodeText(node.id, newText); // 更新节点文本
             actions.updateNodeSize(node.id, measureText(newText)); // 更新节点尺寸
             removeTextarea(); // 移除 textarea
-            if (layoutStyle === 'center') {
-                applyLayoutStyle(layoutStyle)
-            } else {
-                calculateTreeLayout();
-            }
+            applyLayoutStyle(layoutStyle)
         });
     };
 
@@ -185,11 +182,7 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
                         node.position[0],
                         node.position[1],
                     ]);
-                    if (layoutStyle === 'center') {
-                        applyLayoutStyle(layoutStyle)
-                    } else {
-                        calculateTreeLayout();
-                    }
+                    applyLayoutStyle(layoutStyle)
                 }}>
                     <Circle
                         radius={10}
@@ -206,11 +199,12 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
                     e.cancelBubble = true;
                     if (node.children.length === 0) return; // 如果没有子节点，不显示折叠/展开按钮
                     actions.toggleCollapse(node.id);
-                    if (layoutStyle === 'center') {
-                        applyLayoutStyle(layoutStyle)
-                    } else {
-                        calculateTreeLayout();
-                    }
+                    // if (layoutStyle === 'center') {
+                    //     applyLayoutStyle(layoutStyle)
+                    // } else {
+                    //     calculateTreeLayout();
+                    // }
+                    applyLayoutStyle(layoutStyle)
                 }}>
                     <Circle
                         radius={10}

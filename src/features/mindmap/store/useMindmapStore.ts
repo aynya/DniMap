@@ -18,7 +18,7 @@ export type State = {
     nodes: Record<string, Node>;
     connections: string[];
     selectedNodeId: string | null;
-    layoutStyle: 'left-to-right' | 'right-to-left' | 'center';
+    layoutStyle: 'left-to-right' | 'right-to-left' | 'center' | 'top-to-bottom'; // 新增布局风格属性
 }
 
 export type Actions = {

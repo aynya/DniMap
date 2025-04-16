@@ -11,6 +11,7 @@ interface RecursiveNodeProps {
 
 const ConnectionRenderer = ({ nodeId }: RecursiveNodeProps) => {
     const nodes = useMindmapStore(state => state.nodes)
+    const layoutStyle = useMindmapStore(state => state.layoutStyle)
     const node = nodes[nodeId]
 
     if (!node) return null
@@ -26,12 +27,21 @@ const ConnectionRenderer = ({ nodeId }: RecursiveNodeProps) => {
                                 sceneFunc={(ctx, shape) => {
                                     ctx.beginPath()
                                     ctx.moveTo(startX, startY)
-                                    ctx.quadraticCurveTo(
-                                        startX,
-                                        endY,
-                                        endX,
-                                        endY
-                                    )
+                                    if(layoutStyle === 'top-to-bottom') {
+                                        ctx.quadraticCurveTo(
+                                            endX,
+                                            startY,
+                                            endX,
+                                            endY
+                                        )
+                                    } else {
+                                        ctx.quadraticCurveTo(
+                                            startX,
+                                            endY,
+                                            endX,
+                                            endY
+                                        )
+                                    }
                                     ctx.fillStrokeShape(shape)
                                 }}
                                 stroke="blue"

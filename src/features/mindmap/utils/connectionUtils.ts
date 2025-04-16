@@ -38,7 +38,13 @@ export const calculateConnectionPoints = (
             endX = toNode.position[0];
             endY = toNode.position[1] + toNode.size[1] / 2;
         }
+    } else if (layoutStyle === 'top-to-bottom') {
+        startX = fromNode.position[0] + fromNode.size[0] / 2;
+        startY = fromNode.position[1] + fromNode.size[1];
+
+        endX = toNode.position[0] + toNode.size[0] / 2;
+        endY = toNode.position[1];
     }
 
-    return [startX, startY, endX, endY]
+    return [startX, startY, endX, endY];
 }

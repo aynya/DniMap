@@ -61,6 +61,12 @@ export const Toolbar = () => {
             >
               从中间到外
             </DropdownMenu.Item>
+            <DropdownMenu.Item
+              className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              onSelect={() => applyLayoutStyle('top-to-bottom')}
+            >
+              从上到下
+            </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
       </DropdownMenu.Root>

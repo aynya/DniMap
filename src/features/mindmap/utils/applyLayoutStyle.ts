@@ -1,8 +1,9 @@
 import { useMindmapStore } from '../store/useMindmapStore';
 import calculateTreeLayout from './calculateTreeLayoutUntils';
 import calculateCenterLayout from './calculateCenterLayout';
+import calculateVerticaLayout from './calculateVerticaLayout';
 
-export const applyLayoutStyle = (layoutStyle: 'left-to-right' | 'right-to-left' | 'center') => {
+export const applyLayoutStyle = (layoutStyle: 'left-to-right' | 'right-to-left' | 'center' | 'top-to-bottom') => {
   // 更新布局样式
   useMindmapStore.setState({ layoutStyle });
 
@@ -13,6 +14,8 @@ export const applyLayoutStyle = (layoutStyle: 'left-to-right' | 'right-to-left' 
   // 根据布局样式计算布局
   if (layoutStyle === 'center') {
     calculateCenterLayout();
+  } else if(layoutStyle === 'top-to-bottom') {
+    calculateVerticaLayout();
   } else {
     calculateTreeLayout();
   }
