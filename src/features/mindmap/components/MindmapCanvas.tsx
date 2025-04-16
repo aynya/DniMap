@@ -1,5 +1,5 @@
 import { Stage, Layer, Group } from 'react-konva'
-import { useRef, useCallback, Fragment } from 'react'
+import { useRef, useCallback, Fragment, useEffect } from 'react'
 import { useMindmapStore } from '../store/useMindmapStore'
 import Node from './Node'
 import ConnectionRenderer from './ConnectionRenderer'
@@ -26,11 +26,28 @@ const TreeNodeComponent = ({ nodeId }: { nodeId: string }) => {
 
 const InfiniteCanvas = () => {
     const stageRef = useRef<Konva.Stage | null>(null); // 引用 Stage 实例
+    const lastPosition = useRef<{ x: number; y: number } | null>(null);
+    const lastTime = useRef<number | null>(null);
+    const inertiaAnimationId = useRef<number | null>(null);
+    const velocity = useRef({ x: 0, y: 0 });
 
     // 处理 Stage 拖动
     const handleStageDragMove = useCallback((e: KonvaEventObject<DragEvent>) => {
         const stage = stageRef.current;
-        if (!stage) return;
+        if (!stage || !lastPosition.current) return;
+
+        console.log(stage.position(), lastPosition.current);
+        console.log(performance.now(), lastTime.current);
+
+        velocity.current = {
+            x: (stage.x() - lastPosition.current.x) / (0.25),
+            y: (stage.y() - lastPosition.current.y) / (0.25),
+        }
+        console.log(velocity.current);
+
+        lastPosition.current = stage.position();
+        lastTime.current = performance.now();
+
 
         // 获取当前 Stage 的位置
         const newX = stage.x();
@@ -38,12 +55,16 @@ const InfiniteCanvas = () => {
 
         console.log('Stage Drag Move:', newX, newY, e);
 
-        // 如果需要，可以在这里更新应用状态
+
     }, []);
 
     const handleStageDragEnd = useCallback((e: KonvaEventObject<DragEvent>) => {
         const stage = stageRef.current;
-        if (!stage) return;
+        if (!stage || !lastPosition.current || !lastTime.current) return;
+
+
+        // 启动惯性动画
+        startInertia(velocity.current);
 
         // 获取最终的 Stage 位置
         const finalX = stage.x();
@@ -51,8 +72,78 @@ const InfiniteCanvas = () => {
 
         console.log('Stage Drag End:', finalX, finalY, e);
 
-        // 如果需要，可以在这里更新应用状态
+
     }, []);
+
+    // 开始惯性动画
+    const startInertia = useCallback((velocity: { x: number; y: number }) => {
+        const stage = stageRef.current;
+        if (!stage) return;
+
+        const friction = 0.96; // 减速度，值越小减速越快
+        let currentVelocity = velocity;
+
+        const animate = () => {
+            const stage = stageRef.current;
+            if (!stage) return;
+
+            // 更新位置
+            const newPosition = stage.position();
+            newPosition.x += currentVelocity.x;
+            newPosition.y += currentVelocity.y;
+
+            // 应用新位置
+            stage.position(newPosition);
+            stage.batchDraw();
+
+            // 更新速度
+            currentVelocity = {
+                x: currentVelocity.x * friction,
+                y: currentVelocity.y * friction,
+            };
+            // currentVelocity.x *= friction;
+            // currentVelocity.y *= friction;
+
+
+            // 如果速度足够低，则停止动画
+            if (Math.abs(currentVelocity.x) < 0.1 && Math.abs(currentVelocity.y) < 0.1) {
+                inertiaAnimationId.current = null;
+                return;
+            }
+
+            // 继续下一帧动画
+            inertiaAnimationId.current = requestAnimationFrame(animate);
+        };
+
+        // 启动动画
+        inertiaAnimationId.current = requestAnimationFrame(animate);
+    }, []);
+
+    // 清除惯性动画
+    const clearInertiaAnimation = useCallback(() => {
+        if (inertiaAnimationId.current !== null) {
+            cancelAnimationFrame(inertiaAnimationId.current);
+            inertiaAnimationId.current = null;
+        }
+    }, []);
+
+    useEffect(() => {
+        // 初始化最后的位置和时间
+        const stage = stageRef.current;
+        if (stage) {
+            lastPosition.current = stage.position();
+            lastTime.current = performance.now();
+        }
+
+        // 清理惯性动画
+        return () => {
+            clearInertiaAnimation();
+        };
+    }, [clearInertiaAnimation]);
+
+
+
+
 
 
     // 处理鼠标滚轮缩放

@@ -1,6 +1,6 @@
 // src/features/mindmap/components/Toolbar.tsx
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import { exportAsPNG, exportAsJSON, exportAsSVG, exportAsJPG, exportAsPDF, exportAsXMind } from '../../../lib/exporters'
+import { exportAsPNG, exportAsJSON, exportAsSVG, exportAsJPG, exportAsPDF, exportAsXMind, exportAsDMP } from '../../../lib/exporters'
 import {applyLayoutStyle} from '../utils/applyLayoutStyle'
 
 export const Toolbar = () => {
@@ -48,6 +48,12 @@ export const Toolbar = () => {
               onSelect={() => exportAsXMind()}
             >
               导出xmind
+            </DropdownMenu.Item>
+            <DropdownMenu.Item
+              className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              onSelect={() => exportAsDMP()}
+            >
+              导出专有文件
             </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Portal>

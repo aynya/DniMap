@@ -163,6 +163,31 @@ const generateStage = () => {
     }
 };
 
+
+
+/**
+ * 导出为专有文件dmp格式
+ * @returns void
+ */
+export const exportAsDMP = () => {
+    const state = useMindmapStore.getState();
+
+    // 构造最终导出的数据
+    const data = JSON.stringify({
+        nodes: Object.values(state.nodes), // 扁平化为 Node 对象数组
+        connections: state.connections,
+        selectedNodeId: state.selectedNodeId,
+        layoutStyle: state.layoutStyle
+    }, null, 2);
+
+    const blob = new Blob([data], {type: 'application/dmp'});
+    saveAs(blob, 'mindmap.dmp');
+}
+
+
+
+
+
 /**
  * 导出为 JSON 文件
  * @returns void
