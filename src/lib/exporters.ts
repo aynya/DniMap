@@ -13,7 +13,7 @@ import { calculateConnectionPoints } from '../features/mindmap/utils/connectionU
 const generateStage = () => {
     try {
         // 从 Store 中获取节点和连接信息
-        const { nodes, connections } = useMindmapStore.getState();
+        const { nodes, connections, layoutStyle } = useMindmapStore.getState();
 
         if (!nodes || Object.keys(nodes).length === 0) {
             console.error('没有节点可以导出');
@@ -75,6 +75,16 @@ const generateStage = () => {
         const tempLayer = new Konva.Layer();
         tempStage.add(tempLayer);
 
+        // 添加白色背景矩形（防止在jpg中透明背景会被染成黑色）
+        tempLayer.add(new Konva.Rect({
+            x: 0,
+            y: 0,
+            width: contentWidth,
+            height: contentHeight,
+            fill: 'white',  // 强制白色背景
+            listening: false // 防止影响交互
+        }));
+
         // 绘制可见节点
         visibleNodes.forEach((nodeId) => {
             const node = nodes[nodeId];
@@ -119,12 +129,21 @@ const generateStage = () => {
                 sceneFunc: (ctx, shape) => {
                     ctx.beginPath();
                     ctx.moveTo(startX - minX, startY - minY); // 调整位置
-                    ctx.quadraticCurveTo(
-                        startX - minX,
-                        endY - minY,
-                        endX - minX,
-                        endY - minY
-                    );
+                    if (layoutStyle === 'top-to-bottom') {
+                        ctx.quadraticCurveTo(
+                            endX - minX,
+                            startY - minY,
+                            endX - minX,
+                            endY - minY
+                        )
+                    } else {
+                        ctx.quadraticCurveTo(
+                            startX - minX,
+                            endY - minY,
+                            endX - minX,
+                            endY - minY
+                        )
+                    }
                     ctx.fillStrokeShape(shape);
                 },
                 stroke: 'black',
@@ -199,6 +218,35 @@ export const exportAsPNG = () => {
     }
 };
 
+
+/**
+ * 导出为jpg
+ * @returns void
+ */
+export const exportAsJPG = () => {
+    const result = generateStage();
+    if (!result) return;
+
+    const { stage, container } = result;
+
+    try {
+        const dataUrl = stage.toDataURL({
+            mimeType: 'image/jpeg',
+            quality: 1, // 图片质量
+            pixelRatio: 2, // 提高分辨率
+        });
+
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = 'mindmap.jpg';
+        link.click();
+    } finally {
+        // 清理临时资源
+        stage.destroy();
+        document.body.removeChild(container);
+    }
+}
+
 /**
  * 导出为 SVG
  * @returns void
@@ -234,3 +282,5 @@ export const exportAsSVG = async () => {
         document.body.removeChild(container);
     }
 };
+
+
