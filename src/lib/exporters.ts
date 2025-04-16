@@ -1,10 +1,10 @@
-// src/lib/exporters.ts
 import { saveAs } from 'file-saver'
 import { useMindmapStore } from '../features/mindmap/store/useMindmapStore'
 import Konva from 'konva';
 import { exportStageSVG } from 'react-konva-to-svg';
 import { calculateConnectionPoints } from '../features/mindmap/utils/connectionUtils';
 import { jsPDF } from 'jspdf';
+import JSZip from 'jszip';
 
 
 /**
@@ -331,3 +331,179 @@ export const exportAsSVG = async () => {
 };
 
 
+
+// 定义节点类型
+interface Node {
+    id: string; // 节点 ID
+    text: string; // 节点文本
+    position: [number, number]; // 节点位置
+    children: string[]; // 子节点 ID 列表
+    size: [number, number]; // 节点尺寸
+    collapsed: boolean; // 折叠状态
+    direction?: 'left' | 'right' | 'none'; // 方向属性
+}
+
+// 定义思维导图主题类型
+interface Topic {
+    id: string;
+    structureClass: string;
+    title: string;
+    children?: {
+        attached: Topic[]; // 子节点
+    };
+}
+
+// 定义思维导图工作表类型
+interface Sheet {
+    id: string;
+    class: string;
+    title: string;
+    extensions: unknown[];
+    topicPositioning: string;
+    topicOverlapping: string;
+    coreVersion: string;
+    rootTopic: Topic;
+}
+
+// 定义 content.json 的类型
+type ContentJSON = Sheet[];
+
+// 定义 metadata.json 的类型
+interface MetadataJSON {
+    modifier: string;
+    dataStructureVersion: string;
+    creator: { name: string };
+    layoutEngineVersion: string;
+    activeSheetId: string;
+}
+
+// 定义 manifest.json 的类型
+interface ManifestJSON {
+    "file-entries": {
+        [filename: string]: { "media-type": string };
+    };
+}
+
+// 辅助函数：递归构建子节点
+const buildChildren = (nodes: Record<string, Node>, parentId: string): Topic[] => {
+    console.log(`Processing parentId: ${parentId}`);
+    if (!nodes[parentId]) {
+        console.warn(`Node with id "${parentId}" not found`);
+        return [];
+    }
+
+    const childrenIds = nodes[parentId].children; // 获取当前父节点的子节点 ID 列表
+    console.log(`Children IDs for parentId "${parentId}":`, childrenIds);
+
+    // 根据子节点 ID 构建子节点列表
+    return childrenIds
+        .map((childId): Topic | null => {
+            const childNode = nodes[childId];
+            if (!childNode) {
+                console.warn(`Child node with id "${childId}" not found`);
+                return null;
+            }
+            return {
+                id: childNode.id,
+                structureClass: 'org.xmind.ui.logic.right',
+                title: childNode.text,
+                children: {
+                    attached: buildChildren(nodes, childNode.id), // 递归处理子节点
+                },
+            };
+        })
+        .filter((topic): topic is Topic => !!topic); // 过滤掉无效的子节点
+};
+
+// 辅助函数：构建 content.json
+const createContentJSON = (): ContentJSON => {
+    const { nodes } = useMindmapStore.getState();
+
+    // 构建根节点
+    const rootNode = nodes['root'];
+    if (!rootNode) {
+        throw new Error('未找到根节点');
+    }
+
+    const rootTopic: Topic = {
+        id: 'root',
+        structureClass: 'org.xmind.ui.logic.right',
+        title: rootNode.text,
+        children: {
+            attached: buildChildren(nodes, 'root'), // 从根节点开始递归
+        },
+    };
+
+    return [
+        {
+            id: 'simpleMindMap_1744799393059',
+            class: 'sheet',
+            title: '思维导图标题',
+            extensions: [],
+            topicPositioning: 'fixed',
+            topicOverlapping: 'overlap',
+            coreVersion: '2.100.0',
+            rootTopic,
+        },
+    ];
+};
+
+// 辅助函数：构建 metadata.json
+const createMetadataJSON = (): MetadataJSON => {
+    return {
+        modifier: '', // 修改者（可为空）
+        dataStructureVersion: '2', // 数据结构版本
+        creator: {
+            name: 'mind-map', // 创建者名称
+        },
+        layoutEngineVersion: '3', // 布局引擎版本
+        activeSheetId: 'simpleMindMap_1744799393059', // 当前活动的工作表 ID
+    };
+};
+
+// 辅助函数：构建 manifest.json
+const createManifestJSON = (): ManifestJSON => {
+    return {
+        "file-entries": {
+            "content.json": { "media-type": "application/json" }, // content.json 的媒体类型
+            "metadata.json": { "media-type": "application/json" }, // metadata.json 的媒体类型
+            "manifest.json": { "media-type": "application/json" }, // manifest.json 的媒体类型
+        },
+    };
+};
+
+// 导出为 XMind 文件
+export const exportAsXMind = (): void => {
+    try {
+        // 获取节点数据
+        const { nodes } = useMindmapStore.getState();
+
+        // 检查 nodes 是否为空
+        if (!nodes || Object.keys(nodes).length === 0) {
+            console.error('没有节点可以导出');
+            return;
+        }
+
+        // 构建 content.json
+        const contentJson: ContentJSON = createContentJSON();
+
+        // 构建 metadata.json
+        const metadataJson: MetadataJSON = createMetadataJSON();
+
+        // 构建 manifest.json
+        const manifestJson: ManifestJSON = createManifestJSON();
+
+        // 使用 JSZip 打包
+        const zip = new JSZip();
+        zip.file('content.json', JSON.stringify(contentJson));
+        zip.file('metadata.json', JSON.stringify(metadataJson));
+        zip.file('manifest.json', JSON.stringify(manifestJson));
+
+        // 生成并下载文件
+        zip.generateAsync({ type: 'blob', compression: 'DEFLATE' }).then((blob) => {
+            saveAs(blob, 'mindmap.xmind');
+        });
+    } catch (error) {
+        console.error('导出失败:', error);
+    }
+};
