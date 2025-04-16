@@ -168,28 +168,40 @@ const generateStage = () => {
  * @returns void
  */
 export const exportAsJSON = () => {
-    const state = useMindmapStore.getState()
+    const state = useMindmapStore.getState();
+
+    // 递归构建分层节点结构
+    const buildHierarchy = (nodeId: string): unknown => {
+        const node = state.nodes[nodeId];
+        if (!node) return null;
+
+        // 构建当前节点的对象
+        const currentNode = {
+            id: node.id,
+            text: node.text,
+            position: node.position,
+            children: node.children.map(childId => buildHierarchy(childId)).filter(Boolean),
+            size: node.size,
+            collapsed: node.collapsed,
+            direction: node.direction
+        };
+
+        return currentNode;
+    };
+
+    // 从根节点开始递归构建整个树
+    const root = buildHierarchy('root');
+
+    // 构造最终导出的数据
     const data = JSON.stringify({
-        nodes: state.nodes,
+        nodes: root, // 导出的节点是分层的结构
         connections: state.connections
-    }, null, 2)
+    }, null, 2);
 
-    const blob = new Blob([data], { type: 'application/json' })
-    saveAs(blob, 'mindmap.json')
-}
-
-export const importFromJSON = async (file: File) => {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-        try {
-            const data = JSON.parse(e.target?.result as string)
-            useMindmapStore.setState(data)
-        } catch (error) {
-            console.error('文件解析失败', error)
-        }
-    }
-    reader.readAsText(file)
-}
+    // 创建 Blob 并保存文件
+    const blob = new Blob([data], { type: 'application/json' });
+    saveAs(blob, 'mindmap.json');
+};
 
 /**
  * 导出为png
