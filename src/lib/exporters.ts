@@ -4,6 +4,7 @@ import { useMindmapStore } from '../features/mindmap/store/useMindmapStore'
 import Konva from 'konva';
 import { exportStageSVG } from 'react-konva-to-svg';
 import { calculateConnectionPoints } from '../features/mindmap/utils/connectionUtils';
+import { jsPDF } from 'jspdf';
 
 
 /**
@@ -246,6 +247,52 @@ export const exportAsJPG = () => {
         document.body.removeChild(container);
     }
 }
+
+/**
+ * 导出为 PDF
+ * @returns void
+ */
+export const exportAsPDF = () => {
+    // 生成临时 Stage
+    const result = generateStage();
+    if (!result) return;
+
+    const { stage, container } = result;
+
+    try {
+        // 导出图片为 Data URL
+        const dataUrl = stage.toDataURL({
+            mimeType: 'image/png',
+            pixelRatio: 2, // 提高分辨率
+        });
+
+        // 获取 Stage 的宽高（以像素为单位）
+        const stageWidthPx = stage.width();
+        const stageHeightPx = stage.height();
+
+        // 创建 jsPDF 实例
+        // 根据舞台的宽高决定页面方向
+        // 在pdf中内容的实际宽高比例需要与 PDF 页面的比例匹配
+        // pdf页面的方向决定了 pdf的宽高比
+        let pdf;
+        if (stageWidthPx > stageHeightPx) {
+            pdf = new jsPDF('l', 'px', [stageWidthPx, stageHeightPx]); // 横向布局
+        } else {
+            pdf = new jsPDF('p', 'px', [stageHeightPx, stageWidthPx]); // 纵向布局
+        }
+
+        // 将图片添加到 PDF 中
+        // 注意：由于我们使用的是'px'作为单位，所以这里不需要进行单位转换
+        pdf.addImage(dataUrl, 'PNG', 0, 0, stageWidthPx, stageHeightPx);
+
+        // 下载 PDF 文件
+        pdf.save('mindmap.pdf');
+    } finally {
+        // 清理临时资源
+        stage.destroy();
+        document.body.removeChild(container);
+    }
+};
 
 /**
  * 导出为 SVG
