@@ -5,7 +5,7 @@
     { "path": "./tsconfig.node.json" }
   ],
   "compilerOptions": {
-    "typeRoots": ["node_modules/@types", "src/types"],
-    "include": ["src/**/*"]
-  }
+    "typeRoots": ["node_modules/@types", "src/types"]
+  },
+  "include": ["src/**/*"] // 正确：include 是顶级字段
 }

@@ -5,7 +5,7 @@ import { useMindmapStore, type Node } from '../features/mindmap/store/useMindmap
 
 
 /**
- * 
+ * 导入XLSX
  * @param file - XLSX 文件对象
  * @returns Promise<void>
  */
@@ -124,7 +124,7 @@ export const importFromXlsx = (file: File) => {
 
 
 /**
- * 
+ * 导入 Markdown 文件
  * @param file - Markdown 文件对象
  * @returns 
  */
