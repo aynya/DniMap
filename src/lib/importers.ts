@@ -1,5 +1,14 @@
 import * as XLSX from 'xlsx';
+import JSZip from 'jszip';
 import { useMindmapStore, type Node } from '../features/mindmap/store/useMindmapStore';
+
+
+
+/**
+ * 
+ * @param file - XLSX 文件对象
+ * @returns Promise<void>
+ */
 
 
 // 定义解析后的数据类型
@@ -113,6 +122,14 @@ export const importFromXlsx = (file: File) => {
 
 
 
+
+/**
+ * 
+ * @param file - Markdown 文件对象
+ * @returns 
+ */
+
+
 // 导入 Markdown 文件
 export const importFromMarkdown = (file: File): Promise<void> => {
     return new Promise((resolve, reject) => {
@@ -188,5 +205,124 @@ export const importFromMarkdown = (file: File): Promise<void> => {
 
         reader.onerror = (error) => reject(error);
         reader.readAsText(file);
+    });
+};
+
+
+/**
+ * 导入 XMind 文件
+ * @param file - XMind 文件对象
+ * @returns Promise<void>
+ */
+
+
+
+// 定义思维导图主题类型
+interface Topic {
+    id: string;
+    structureClass: string;
+    title: string;
+    size: [number, number]; // 节点尺寸
+    position: [number, number]; // 节点位置
+    collapsed: boolean; // 折叠状态
+    children?: {
+        attached: Topic[]; // 子节点
+    };
+}
+// 定义思维导图工作表类型
+interface Sheet {
+    id: string;
+    class: string;
+    title: string;
+    extensions: unknown[];
+    topicPositioning: string;
+    topicOverlapping: string;
+    coreVersion: string;
+    rootTopic: Topic;
+}
+// 定义 content.json 的类型
+type ContentJSON = Sheet[];
+// 定义解析后的数据结构
+interface ParsedData {
+    nodes: Record<string, Node>; // 节点记录
+    connections: string[]; // 连接关系列表
+}
+// 辅助函数：递归解析子节点
+const parseChildren = (topic: Topic, parentId: string, parsedData: ParsedData): void => {
+    const { id, title, position, size, collapsed, children } = topic;
+
+    // 创建当前节点
+    const node: Node = {
+        id,
+        text: title,
+        position: position || [0, 0], // 如果没有提供位置，则使用默认值
+        children: [], // 子节点 ID 列表
+        size: size || [200, 60], // 如果没有提供尺寸，则使用默认值
+        collapsed: collapsed || false, // 如果没有提供折叠状态，则使用默认值
+        direction: 'right', // 方向属性是可选的
+    };
+
+    // 添加到节点记录
+    parsedData.nodes[id] = node;
+
+    // 如果有父节点，则建立连接
+    if (parentId) {
+        parsedData.connections.push(`${parentId}---${id}`);
+        parsedData.nodes[parentId].children.push(id);
+    }
+
+    // 递归处理子节点
+    if (children?.attached) {
+        children.attached.forEach((childTopic) => {
+            parseChildren(childTopic, id, parsedData);
+        });
+    }
+};
+
+// 导入xmind文件
+export const importFromXMind = (file: File): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        const zip = new JSZip();
+
+        zip.loadAsync(file)
+            .then((unzipped) => {
+                // 读取 content.json
+                return unzipped.file('content.json')?.async('text');
+            })
+            .then((contentJsonText) => {
+                if (!contentJsonText) {
+                    throw new Error('Missing content.json');
+                }
+
+                // 解析 content.json
+                const contentJson: ContentJSON = JSON.parse(contentJsonText);
+
+                // 初始化解析数据
+                const parsedData: ParsedData = {
+                    nodes: {},
+                    connections: [],
+                };
+
+                // 解析根节点
+                const rootSheet = contentJson[0];
+                if (!rootSheet || !rootSheet.rootTopic) {
+                    throw new Error('Invalid content.json structure');
+                }
+
+                parseChildren(rootSheet.rootTopic, '', parsedData);
+
+                // 更新 store 状态
+                useMindmapStore.setState({
+                    nodes: parsedData.nodes,
+                    connections: parsedData.connections,
+                    selectedNodeId: null, // 如果需要，可以从其他地方获取
+                    layoutStyle: 'left-to-right', // 如果需要，可以从 metadata.json 获取
+                });
+
+                resolve();
+            })
+            .catch((error) => {
+                reject(new Error(`Failed to import XMind file: ${error.message}`));
+            });
     });
 };

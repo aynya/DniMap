@@ -370,6 +370,8 @@ export const exportAsSVG = async () => {
 
 
 
+
+
 // 定义节点类型
 interface Node {
     id: string; // 节点 ID
@@ -386,6 +388,9 @@ interface Topic {
     id: string;
     structureClass: string;
     title: string;
+    size: [number, number]; // 节点尺寸
+    position: [number, number]; // 节点位置
+    collapsed: boolean; // 折叠状态
     children?: {
         attached: Topic[]; // 子节点
     };
@@ -445,6 +450,9 @@ const buildChildren = (nodes: Record<string, Node>, parentId: string): Topic[] =
                 id: childNode.id,
                 structureClass: 'org.xmind.ui.logic.right',
                 title: childNode.text,
+                size: childNode.size,
+                position: childNode.position,
+                collapsed: childNode.collapsed,
                 children: {
                     attached: buildChildren(nodes, childNode.id), // 递归处理子节点
                 },
@@ -467,6 +475,9 @@ const createContentJSON = (): ContentJSON => {
         id: 'root',
         structureClass: 'org.xmind.ui.logic.right',
         title: rootNode.text,
+        size: rootNode.size,
+        position: rootNode.position,
+        collapsed: rootNode.collapsed,
         children: {
             attached: buildChildren(nodes, 'root'), // 从根节点开始递归
         },
@@ -545,6 +556,14 @@ export const exportAsXMind = (): void => {
         console.error('导出失败:', error);
     }
 };
+
+
+
+
+
+
+
+
 
 
 /**
