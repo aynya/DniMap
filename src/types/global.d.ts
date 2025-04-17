@@ -1,6 +1,6 @@
 // 声明 react-konva-to-svg 的类型
 declare module 'react-konva-to-svg' {
-    import { Stage } from 'konva';
+    import Konva from 'konva'; // 使用默认导入
 
     /**
      * 导出 Konva Stage 为 SVG
@@ -10,11 +10,11 @@ declare module 'react-konva-to-svg' {
      * @returns 返回 SVG 字符串或 Blob
      */
     export function exportStageSVG(
-        stage: Stage,
+        stage: Konva.Stage, // 使用 Konva.Stage 类型
         blob?: boolean,
         options?: {
-            onBefore?: (params: [Stage, unknown]) => void;
-            onAfter?: (params: [Stage, unknown]) => void;
+            onBefore?: (params: [Konva.Stage, unknown]) => void;
+            onAfter?: (params: [Konva.Stage, unknown]) => void;
         }
     ): Promise<string | Blob>;
 }
