@@ -2,7 +2,7 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { exportAsPNG, exportAsJSON, exportAsSVG, exportAsJPG, exportAsPDF, exportAsXMind, exportAsDMP, exportAsExcel, exportAsMarkdown } from '../../../lib/exporters'
 import {applyLayoutStyle} from '../utils/applyLayoutStyle'
-import { importFromXlsx } from '../../../lib/importers'
+import { importFromMarkdown, importFromXlsx } from '../../../lib/importers'
 
 export const Toolbar = () => {
 
@@ -14,7 +14,7 @@ export const Toolbar = () => {
         importFromXlsx(file);
         break;
       case 'md':
-        // 处理Markdown文件
+        importFromMarkdown(file);
         break;
       case 'xmind':
         // 处理XMind文件

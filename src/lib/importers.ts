@@ -110,3 +110,83 @@ export const importFromXlsx = (file: File) => {
         reader.readAsArrayBuffer(file);
     });
 };
+
+
+
+// 导入 Markdown 文件
+export const importFromMarkdown = (file: File): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            try {
+                const content = e.target?.result as string;
+
+                // 定义解析后的节点和连接
+                const nodes: Record<string, Node> = {};
+                const connections: string[] = [];
+
+                // 当前层级的节点栈
+                const nodeStack: { id: string; level: number }[] = [];
+
+                // 逐行解析 Markdown
+                content.split('\n').forEach((line) => {
+                    // 匹配标题和元数据
+                    const headingMatch = line.match(/^(#+)\s+(.+?)\s+<!--\s+(.+?)\s+-->/);
+                    if (!headingMatch) return;
+
+                    const [_, hashes, text, metadata] = headingMatch;
+
+                    console.log(_);
+
+                    const level = hashes.length;
+
+                    // 解析元数据
+                    const nodeData = JSON.parse(metadata);
+                    const nodeId = nodeData.id;
+
+                    // 创建节点
+                    nodes[nodeId] = {
+                        id: nodeId,
+                        text,
+                        position: nodeData.position,
+                        children: [],
+                        size: nodeData.size,
+                        collapsed: nodeData.collapsed,
+                        direction: nodeData.direction || undefined,
+                    };
+
+                    // 确定父子关系
+                    while (nodeStack.length > 0 && nodeStack[nodeStack.length - 1].level >= level) {
+                        nodeStack.pop();
+                    }
+
+                    if (nodeStack.length > 0) {
+                        const parentId = nodeStack[nodeStack.length - 1].id;
+                        nodes[parentId].children.push(nodeId);
+                        connections.push(`${parentId}---${nodeId}`);
+                    }
+
+                    // 将当前节点压入栈
+                    nodeStack.push({ id: nodeId, level });
+                });
+
+                // 更新 store 状态
+                useMindmapStore.setState({
+                    nodes,
+                    connections,
+                    selectedNodeId: null, // 如果需要，可以从其他地方获取
+                    layoutStyle: 'left-to-right', // 如果需要，可以从其他地方获取
+                });
+
+                resolve();
+            } catch (error) {
+                console.error('Error reading Markdown file:', error);
+                reject(new Error('Invalid Markdown file'));
+            }
+        };
+
+        reader.onerror = (error) => reject(error);
+        reader.readAsText(file);
+    });
+};
