@@ -5,6 +5,7 @@ import { exportStageSVG } from 'react-konva-to-svg';
 import { calculateConnectionPoints } from '../features/mindmap/utils/connectionUtils';
 import { jsPDF } from 'jspdf';
 import JSZip from 'jszip';
+import * as XLSX from 'xlsx';
 
 
 /**
@@ -544,3 +545,106 @@ export const exportAsXMind = (): void => {
         console.error('导出失败:', error);
     }
 };
+
+
+/**
+ * 导出为 Excel
+ * @returns void
+ */
+export const exportAsExcel = () => {
+    const state = useMindmapStore.getState();
+    const { nodes, connections, selectedNodeId, layoutStyle } = state;
+
+    // Nodes 表格
+    const nodesData = Object.values(nodes).map((node) => ({
+        id: node.id,
+        text: node.text,
+        position_x: node.position[0],
+        position_y: node.position[1],
+        size_width: node.size[0],
+        size_height: node.size[1],
+        collapsed: node.collapsed,
+        direction: node.direction || null,
+    }));
+
+    // Connections 表格
+    const connectionsData = connections.map((conn) => {
+        const [from, to] = conn.split('---');
+        return { from, to };
+    });
+
+    // Global State 表格
+    const globalStateData = [
+        { key: 'selectedNodeId', value: selectedNodeId },
+        { key: 'layoutStyle', value: layoutStyle },
+    ];
+
+    // 创建工作簿
+    const workbook = XLSX.utils.book_new();
+
+    // 添加 Nodes 工作表
+    const nodesWorksheet = XLSX.utils.json_to_sheet(nodesData);
+    XLSX.utils.book_append_sheet(workbook, nodesWorksheet, 'Nodes');
+
+    // 添加 Connections 工作表
+    const connectionsWorksheet = XLSX.utils.json_to_sheet(connectionsData);
+    XLSX.utils.book_append_sheet(workbook, connectionsWorksheet, 'Connections');
+
+    // 添加 Global State 工作表
+    const globalStateWorksheet = XLSX.utils.json_to_sheet(globalStateData);
+    XLSX.utils.book_append_sheet(workbook, globalStateWorksheet, 'Global State');
+
+    // 导出文件
+    XLSX.writeFile(workbook, 'mindmap_data.xlsx');
+}
+
+
+
+/**
+ * 导出markdown
+ * @returns void
+ */
+export const exportAsMarkdown = () => {
+    const state = useMindmapStore.getState();
+    const { nodes } = state;
+
+    // 递归生成 Markdown 内容
+    const generateMarkdown = (nodeId: string, level = 1) => {
+        const node = nodes[nodeId];
+        if (!node) return '';
+
+        // 当前节点的标题
+        const heading = '#'.repeat(level);
+        const metadata = JSON.stringify({
+            id: node.id,
+            position: node.position,
+            size: node.size,
+            collapsed: node.collapsed,
+            direction: node.direction,
+        });
+
+        // 当前节点的 Markdown 表示
+        let markdown = `${heading} ${node.text} <!-- ${metadata} -->\n`;
+
+        // 如果节点未折叠，则递归生成子节点
+        if (node.children.length > 0) {
+            node.children.forEach((childId) => {
+                markdown += generateMarkdown(childId, level + 1);
+            });
+        }
+
+        return markdown;
+    };
+
+    // 从根节点开始生成 Markdown
+    const rootMarkdown = generateMarkdown('root');
+
+    // 将 Markdown 内容下载为文件
+    const blob = new Blob([rootMarkdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mindmap.md';
+    a.click();
+}

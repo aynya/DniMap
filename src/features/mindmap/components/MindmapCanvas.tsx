@@ -36,12 +36,12 @@ const InfiniteCanvas = () => {
         const stage = stageRef.current;
         if (!stage || !lastPosition.current) return;
 
-        console.log(stage.position(), lastPosition.current);
-        console.log(performance.now(), lastTime.current);
+        // console.log(stage.position(), lastPosition.current);
+        // console.log(performance.now(), lastTime.current);
 
         velocity.current = {
-            x: (stage.x() - lastPosition.current.x) / (0.25),
-            y: (stage.y() - lastPosition.current.y) / (0.25),
+            x: (stage.x() - lastPosition.current.x) / (0.5),
+            y: (stage.y() - lastPosition.current.y) / (0.5),
         }
         console.log(velocity.current);
 

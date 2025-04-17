@@ -31,6 +31,7 @@
     "react-konva": "^19.0.3",
     "react-konva-to-svg": "^1.0.2",
     "simple-mind-map": "^0.14.0",
+    "xlsx": "^0.18.5",
     "zustand": "^5.0.3"
   },
   "devDependencies": {
