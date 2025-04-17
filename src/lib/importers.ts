@@ -372,12 +372,10 @@ export const importFromJSON = (file: File): Promise<void> => {
                         parsedData.nodes[parentId].children.push(id);
                     }
 
-                    console.log(children);
 
                     // 递归处理子节点
                     if(children && Array.isArray(children)) {
                         children.forEach((child) => {
-                            console.log(child);
                             parseHierarchy(child, parsedData, id);
                         })
                     }
@@ -423,4 +421,53 @@ export const importFromJSON = (file: File): Promise<void> => {
         reader.onerror = (error) => reject(error);
         reader.readAsText(file);
     })
+}
+
+
+/**
+ * 导入DMP文件
+ * @param file - DMP文件对象
+ * @returns Promise<void>
+ */
+export const importFromDMP = (file: File): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                // 读取文件内容
+                const content = e.target?.result as string;
+                if(!content) {
+                    throw new Error('Empty file content');
+                }
+                // 解析DMP格式
+                const data = JSON.parse(content);
+                if(!data.nodes || !data.connections) {
+                    throw new Error('Invalid DMP structure');
+                }
+
+                // 初始化
+                const parsedData: Record<string, Node> = {};
+
+                // 解析节点
+                data.nodes.forEach((node: Node) => { // 对象数组转映射
+                    parsedData[node.id] = node;
+                })
+
+                // 更新全局状态
+                useMindmapStore.setState({
+                    nodes: parsedData,
+                    connections: data.connections,
+                    selectedNodeId: data.selectedNodeId,
+                    layoutStyle: data.layoutStyle,
+                });
+                resolve();
+            } catch (error) {
+                console.error('Error reading DMP file:', error);
+                reject(new Error('Invalid DMP file'));
+            }
+        }
+        reader.onerror = (error) => reject(error);
+        reader.readAsText(file);
+    })
+
 }
