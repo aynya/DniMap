@@ -326,3 +326,101 @@ export const importFromXMind = (file: File): Promise<void> => {
             });
     });
 };
+
+
+/**
+ * 导入JSON文件
+ * @param file - JSON文件对象
+ * @returns Promise<void>
+ */
+
+interface JSONNode {
+    id: string;
+    text: string;
+    position?: [number, number]; // 可选属性
+    children?: JSONNode[]; // 子节点
+    size?: [number, number]; // 可选属性
+    collapsed?: boolean; // 可选属性
+    direction?: 'left' | 'right' | 'none'; // 可选属性
+}
+export const importFromJSON = (file: File): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                // 辅助函数：递归解析子节点
+                const parseHierarchy = (node: JSONNode, parsedData: ParsedData, parentId?: string): void => {
+                    const { id, text, position, children, size, collapsed, direction } = node;
+
+                    // 创建
+                    const currentNode: Node = {
+                        id,
+                        text,
+                        position: position || [0, 0], // 如果没有提供位置，则使用默认值
+                        children: [], // 子节点 ID 列表
+                        size: size || [200, 60], // 如果没有提供尺寸，则使用默认值
+                        collapsed: collapsed || false, // 如果没有提供折叠状态，则使用默认值
+                        direction: direction|| 'right', // 方向属性是可选的
+                    }
+
+                    // 添加到节点记录
+                    parsedData.nodes[id] = currentNode;
+
+                    // 如果有父节点，则建立连接
+                    if(parentId) {
+                        parsedData.connections.push(`${parentId}---${id}`);
+                        parsedData.nodes[parentId].children.push(id);
+                    }
+
+                    console.log(children);
+
+                    // 递归处理子节点
+                    if(children && Array.isArray(children)) {
+                        children.forEach((child) => {
+                            console.log(child);
+                            parseHierarchy(child, parsedData, id);
+                        })
+                    }
+                }
+
+
+
+                // 读取
+                const content = e.target?.result as string;
+                if(!content) {
+                    throw new Error('Empty file content');
+                }
+                // 解析JSON数据
+                const data = JSON.parse(content);
+                
+                // 初始化
+                const parsedData: ParsedData = {
+                    nodes: {},
+                    connections: [],
+                }
+
+                if(!data.nodes || !data.connections) {
+                    throw new Error('Invalid JSON structure');
+                }
+
+                // 解析节点
+                parseHierarchy(data.nodes, parsedData);
+
+                // 更新全局状态
+                useMindmapStore.setState({
+                    nodes: parsedData.nodes,
+                    connections: parsedData.connections,
+                    selectedNodeId: null,
+                    layoutStyle: 'left-to-right',
+                });
+
+                resolve();
+            } catch (error) {
+                console.error('Error reading JSON file:', error);
+                reject(new Error('Invalid JSON file'));
+            }
+        }
+        reader.onerror = (error) => reject(error);
+        reader.readAsText(file);
+    })
+}
