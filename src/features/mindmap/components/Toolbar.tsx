@@ -5,7 +5,22 @@ import { applyLayoutStyle } from '../utils/applyLayoutStyle'
 import { importFromDMP, importFromJSON, importFromMarkdown, importFromXlsx, importFromXMind } from '../../../lib/importers'
 import { useMindmapStore } from '../store/useMindmapStore'
 import '@ant-design/v5-patch-for-react-19';
-import { Button, FloatButton, Tooltip, Modal, Card, Image, Typography  } from 'antd'
+import { 
+  Button, 
+  FloatButton, 
+  Tooltip, 
+  Modal, 
+  Card, 
+  Image, 
+  Typography,
+  Form,
+  Input,
+  Radio,
+  Checkbox,
+  message,
+  Space,
+
+} from 'antd'
 import {
   UndoOutlined,
   RedoOutlined,
@@ -20,37 +35,158 @@ import {
   ClusterOutlined,
   MenuUnfoldOutlined,
   ControlOutlined,
-  AimOutlined
+  AimOutlined,
+  
 } from '@ant-design/icons'
 import { useState } from 'react'
+const {Title} = Typography;
+import {excelIcon, pdfIcon, xmindIcon, mdIcon, jsonIcon, dmpIcon, jpIcon, svgIcon} from './MyIcon'
 
 
-// UndoOutlined RedoOutlined DeleteOutlined 
-// <FileAddOutlined /> <FileOutlined /> <SaveOutlined />  <ImportOutlined />  <ExportOutlined />
+
+
+
+
+const ExportModal = () => {
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [form] = Form.useForm();
+
+  const showModal = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+  };
+
+  const onFinish = (values: unknown) => {
+    console.log('Received values of form: ', values);
+    // 这里可以添加导出逻辑
+    message.success('导出成功！');
+    setIsModalVisible(false);
+  };
+
+  return (
+    <>
+      {/* 导出按钮 */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <Button icon={<ExportOutlined />} onClick={showModal} />
+        <span style={{ fontSize: '12px', marginTop: '4px' }}>导出</span>
+      </div>
+
+      {/* 导出对话框 */}
+      <Modal
+        title="导出"
+        open={isModalVisible}
+        onOk={() => form.submit()}
+        onCancel={handleCancel}
+        footer={[
+          <Button key="cancel" onClick={handleCancel}>
+            取消
+          </Button>,
+          <Button key="submit" type="primary" onClick={() => form.submit()}>
+            确定
+          </Button>,
+        ]}
+      >
+        <Form form={form} name="exportForm" onFinish={onFinish}>
+          <Form.Item
+            label="导出文件名称"
+            name="fileName"
+            rules={[{ required: true, message: '请输入文件名!' }]}
+          >
+            <Input placeholder="请输入文件名" />
+          </Form.Item>
+
+          <Form.Item label="格式">
+            <Radio.Group name="format">
+              <Space direction="vertical">
+                <Radio value="json">
+                  {jsonIcon()}
+                  JSON
+                </Radio>
+                <Radio value="image">
+                  {jpIcon()}
+                  图片
+                  <Checkbox.Group style={{ marginLeft: 8 }}>
+                    <Checkbox value="png">PNG</Checkbox>
+                    <Checkbox value="jpg">JPG</Checkbox>
+                  </Checkbox.Group>
+                </Radio>
+                <Radio value="svg">
+                  {svgIcon()}
+                  SVG
+                </Radio>
+                <Radio value="pdf">
+                  {pdfIcon()}
+                  PDF
+                </Radio>
+                <Radio value="markdown">
+                  {mdIcon()}
+                  Markdown
+                </Radio>
+                <Radio value="excel">
+                  {excelIcon()}
+                  Excel
+                </Radio>
+                <Radio value="xmind">
+                  {xmindIcon()}
+                  XMind
+                </Radio>
+                <Radio value="dmp">
+                  {dmpIcon()}
+                  专有文件
+                </Radio>
+              </Space>
+            </Radio.Group>
+          </Form.Item>
+
+          <Form.Item label="选项">
+            <Checkbox>是否包含主题、结构等配置数据</Checkbox>
+          </Form.Item>
+        </Form>
+      </Modal>
+    </>
+  );
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 export const Toolbar = () => {
   const actions = useMindmapStore(state => state.actions);
-  const handleFileUpload = (file: File) => {
-    const fileType = file.name.split('.').pop()?.toLowerCase();
 
-    switch (fileType) {
-      case 'xlsx':
-        importFromXlsx(file);
-        break;
-      case 'md':
-        importFromMarkdown(file);
-        break;
-      case 'xmind':
-        importFromXMind(file);
-        break;
-      case 'json':
-        importFromJSON(file);
-        break;
-      case 'dmp':
-        importFromDMP(file);
-        break;
-    }
-  }
+  // const handleFileUpload = (file: File) => {
+  //   const fileType = file.name.split('.').pop()?.toLowerCase();
+
+  //   switch (fileType) {
+  //     case 'xlsx':
+  //       importFromXlsx(file);
+  //       break;
+  //     case 'md':
+  //       importFromMarkdown(file);
+  //       break;
+  //     case 'xmind':
+  //       importFromXMind(file);
+  //       break;
+  //     case 'json':
+  //       importFromJSON(file);
+  //       break;
+  //     case 'dmp':
+  //       importFromDMP(file);
+  //       break;
+  //   }
+  // }
 
 
 
@@ -61,7 +197,7 @@ export const Toolbar = () => {
 
 
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const {Title} = Typography;
+  
 
   // 对话框中的结构选项
   const structureOptions = [
@@ -179,10 +315,7 @@ export const Toolbar = () => {
           </div>
 
           {/* 导出 */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Button icon={<ExportOutlined />} />
-            <span style={{ fontSize: '12px', marginTop: '4px' }}>导出</span>
-          </div>
+          {ExportModal()}
         </div>
       </div>
 
@@ -307,39 +440,6 @@ export const Toolbar = () => {
 
     //   </DropdownMenu.Root>
 
-    //   <DropdownMenu.Root>
-    //     <DropdownMenu.Trigger className="px-4 py-2 bg-white rounded-lg shadow">
-    //       结构
-    //     </DropdownMenu.Trigger>
-    //     <DropdownMenu.Portal>
-    //       <DropdownMenu.Content className="bg-white rounded-lg p-2 shadow-lg">
-    //         <DropdownMenu.Item
-    //           className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-    //           onSelect={() => {applyLayoutStyle('left-to-right'); actions.saveState()}}
-    //         >
-    //           从左到右
-    //         </DropdownMenu.Item>
-    //         <DropdownMenu.Item
-    //           className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-    //           onSelect={() => {applyLayoutStyle('right-to-left'); actions.saveState()}}
-    //         >
-    //           从右到左
-    //         </DropdownMenu.Item>
-    //         <DropdownMenu.Item
-    //           className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-    //           onSelect={() => {applyLayoutStyle('center'); actions.saveState()}}
-    //         >
-    //           从中间到外
-    //         </DropdownMenu.Item>
-    //         <DropdownMenu.Item
-    //           className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-    //           onSelect={() => {applyLayoutStyle('top-to-bottom'); actions.saveState()}}
-    //         >
-    //           从上到下
-    //         </DropdownMenu.Item>
-    //       </DropdownMenu.Content>
-    //     </DropdownMenu.Portal>
-    //   </DropdownMenu.Root>
 
     //   <input type="file" onChange={(e) => {
     //     const file = e.target.files?.[0];
