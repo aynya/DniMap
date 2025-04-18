@@ -83,12 +83,10 @@ export const useKeyboardShortcuts = () => {
             } else if(e.key === 'z' && e.ctrlKey) {
                 e.preventDefault();
                 console.log('Undo');
-                console.log('history', history);
                 actions.undo();
             } else if(e.key === 'y' && e.ctrlKey) {
                 e.preventDefault();
                 console.log('redo');
-                console.log('history', history);
                 actions.redo();
             }
         }
