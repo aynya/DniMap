@@ -88,7 +88,7 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
         // 监听键盘事件
         textarea.addEventListener("keydown", (e) => {
             if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
+                e.stopPropagation();
                 textarea.blur(); // 失去焦点触发保存
             }
         });
@@ -119,18 +119,19 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
     };
 
     const handleClick = () => {
-        console.log("handleClick")
+        console.log("handleClick", selectedNodes)
         actions.setSelectedNodes(node.id); // 设置选中节点
         if (node.collapsed) {
             const childArr: string[] = [];
-            function dfs(nodeId: string) { // 递归选取子节点
+            function selecteChildren(nodeId: string) { // 递归选取子节点
                 childArr.push(nodeId);
                 const children = useMindmapStore.getState().nodes[nodeId].children;
+                if(children.length === 0) return;
                 for(const childId of children) {
-                    dfs(childId);
+                    selecteChildren(childId);
                 }
             }
-            dfs(node.id);
+            selecteChildren(node.id);
             actions.setAllSelectedNodes(childArr);
             return; // 如果节点被折叠，不显示添加按钮
         }

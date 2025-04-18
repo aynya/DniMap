@@ -5,6 +5,7 @@ import Node from './Node'
 import ConnectionRenderer from './ConnectionRenderer'
 import { KonvaEventObject } from 'konva/lib/Node'
 import Konva from 'konva';
+import { useKeyboardShortcuts } from '../utils/shortcuts'
 
 const TreeNodeComponent = ({ nodeId }: { nodeId: string }) => {
     const node = useMindmapStore(state => state.nodes[nodeId]);
@@ -30,6 +31,8 @@ const InfiniteCanvas = () => {
     const lastTime = useRef<number | null>(null);
     const inertiaAnimationId = useRef<number | null>(null);
     const velocity = useRef({ x: 0, y: 0 });
+
+    useKeyboardShortcuts(); // 注册快捷键
 
     // 处理 Stage 拖动
     const handleStageDragMove = useCallback((e: KonvaEventObject<DragEvent>) => {

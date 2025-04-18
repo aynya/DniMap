@@ -224,10 +224,7 @@ export const useMindmapStore = create<State & { actions: Actions }>()(
             // 删除选择的节点
             deleteSelectedNodes: () => {
                 set((state) => {
-                    state.selectedNodes.forEach(id => {
-                        state.actions.deleteNode(id)
-                    })
-                    state.selectedNodes = []
+                    state.selectedNodes = [];
                 })
             },
         }
