@@ -205,6 +205,11 @@ const InfiniteCanvas = () => {
                     onWheel={handleWheel}
                     onDragMove={handleStageDragMove} // 添加拖动移动事件
                     onDragEnd={handleStageDragEnd}   // 添加拖动结束事件
+                    onClick={(e) => {
+                        if(e.target === e.currentTarget) {
+                            useMindmapStore.getState().actions.clearSelectedNodes(); // 点击空白处取消选中
+                        }
+                    }}
                 >
                     <Layer>
 

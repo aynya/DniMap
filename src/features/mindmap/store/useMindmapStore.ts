@@ -19,6 +19,7 @@ export type State = {
     connections: string[];
     selectedNodeId: string | null;
     layoutStyle: 'left-to-right' | 'right-to-left' | 'center' | 'top-to-bottom'; // 新增布局风格属性
+    selectedNodes: string[];
 }
 
 export type Actions = {
@@ -31,6 +32,10 @@ export type Actions = {
     updateNodeSize: (id: string, size: [number, number]) => void;
     setNodePositions: (positions: { [id: string]: [number, number] }) => void;
     updateChildrenDirections: () => void;
+    setSelectedNodes: (id: string) => void;
+    setAllSelectedNodes: (id: string[]) => void;
+    clearSelectedNodes: () => void;
+    deleteSelectedNodes: () => void;
 }
 
 export const useMindmapStore = create<State & { actions: Actions }>()(
@@ -46,6 +51,7 @@ export const useMindmapStore = create<State & { actions: Actions }>()(
                 direction: 'none', // 新增方向属性(只在center布局中使用)
             }
         },
+        selectedNodes: [],
         connections: [],
         selectedNodeId: null,
         layoutStyle: 'left-to-right', // 新增布局风格属性
@@ -194,6 +200,35 @@ export const useMindmapStore = create<State & { actions: Actions }>()(
                         }
                     })
                 });
+            },
+            // 更新选择的节点
+            setSelectedNodes: (id: string) => {
+                set((state) => {
+                    if (!state.selectedNodes.includes(id)) {
+                        state.selectedNodes.push(id);
+                    }
+                })
+            },
+            // 批量选择
+            setAllSelectedNodes: (id: string[]) => {
+                set((state) => {
+                    state.selectedNodes = id;
+                })
+            },
+            // 清空选择
+            clearSelectedNodes: () => {
+                set((state) => {
+                    state.selectedNodes = []
+                })
+            },
+            // 删除选择的节点
+            deleteSelectedNodes: () => {
+                set((state) => {
+                    state.selectedNodes.forEach(id => {
+                        state.actions.deleteNode(id)
+                    })
+                    state.selectedNodes = []
+                })
             },
         }
     }))

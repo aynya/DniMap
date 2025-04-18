@@ -12,7 +12,8 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
     const [isHovered, setIsHovered] = useState(false);
     const [isAddButtonVisible, setIsAddButtonVisible] = useState(false);
     const actions = useMindmapStore((state) => state.actions);
-    const layoutStyle = useMindmapStore(state => state.layoutStyle)
+    const layoutStyle = useMindmapStore(state => state.layoutStyle);
+    const selectedNodes = useMindmapStore(state => state.selectedNodes);
 
 
     let theScale = 1
@@ -119,7 +120,20 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
 
     const handleClick = () => {
         console.log("handleClick")
-        if (node.collapsed) return; // 如果节点被折叠，不显示添加按钮
+        actions.setSelectedNodes(node.id); // 设置选中节点
+        if (node.collapsed) {
+            const childArr: string[] = [];
+            function dfs(nodeId: string) { // 递归选取子节点
+                childArr.push(nodeId);
+                const children = useMindmapStore.getState().nodes[nodeId].children;
+                for(const childId of children) {
+                    dfs(childId);
+                }
+            }
+            dfs(node.id);
+            actions.setAllSelectedNodes(childArr);
+            return; // 如果节点被折叠，不显示添加按钮
+        }
         setIsHovered(false)
         setIsAddButtonVisible(true)
     }
@@ -155,6 +169,20 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
             onMouseLeave={handleMouseLeave}
             onDragEnd={handleDragEnd} // 拖动结束时触发
         >
+            {/* 边框 */}
+            {(isHovered || selectedNodes.includes(node.id)) && (
+                <Rect
+                    width={node.size[0] + 4}
+                    height={node.size[1] + 4}
+                    x={-2}
+                    y={-2}
+                    stroke={"#5EC8F8"}
+                    strokeWidth={2}
+                    cornerRadius={8}
+                />
+            )}
+
+
             {/* 节点主体 */}
             <Rect
                 width={node.size[0]}
