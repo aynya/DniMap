@@ -33,7 +33,7 @@ const Node = memo(({ node }: { node: MindmapNode }) => {
     useEffect(() => {
         const [width, height] = measureText(node.text);
         actions.updateNodeSize(node.id, [width, height]);
-    }, [])
+    }, [node.id, node.text, actions]);
 
     // 创建并显示 DOM 输入框
     const handleDoubleClick = (e: KonvaEventObject<MouseEvent>) => {

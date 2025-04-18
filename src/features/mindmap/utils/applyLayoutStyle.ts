@@ -4,6 +4,8 @@ import calculateCenterLayout from './calculateCenterLayout';
 import calculateVerticaLayout from './calculateVerticaLayout';
 
 export const applyLayoutStyle = (layoutStyle: 'left-to-right' | 'right-to-left' | 'center' | 'top-to-bottom') => {
+
+
   // 更新布局样式
   useMindmapStore.setState({ layoutStyle });
 
@@ -19,7 +21,4 @@ export const applyLayoutStyle = (layoutStyle: 'left-to-right' | 'right-to-left' 
   } else {
     calculateTreeLayout();
   }
-
-  const nodes = useMindmapStore.getState().nodes;
-  console.log('节点:', nodes);
 };

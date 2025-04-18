@@ -15,10 +15,10 @@ export const useKeyboardShortcuts = () => {
             if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
                 return;
             }
-            e.preventDefault();
             // console.log(e.key);
             // console.log(e.key === 'Backspace')
             if(e.key === 'Backspace') {
+                e.preventDefault();
                 // 复制当前的 nodes 和 connections
                 const updatedNodes = structuredClone(nodes);
                 const updatedConnections = [...connections];
@@ -77,7 +77,20 @@ export const useKeyboardShortcuts = () => {
                 actions.deleteSelectedNodes();
                 // 重置布局
                 applyLayoutStyle(layoutStyle);
-            }  
+            } else if(e.key === 'a' && e.ctrlKey) {
+                e.preventDefault();
+                actions.setAllSelectedNodes(Object.keys(nodes));
+            } else if(e.key === 'z' && e.ctrlKey) {
+                e.preventDefault();
+                console.log('Undo');
+                console.log('history', history);
+                actions.undo();
+            } else if(e.key === 'y' && e.ctrlKey) {
+                e.preventDefault();
+                console.log('redo');
+                console.log('history', history);
+                actions.redo();
+            }
         }
 
         window.addEventListener('keydown', handleKeyDown);

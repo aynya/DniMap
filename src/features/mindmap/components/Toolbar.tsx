@@ -3,9 +3,10 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { exportAsPNG, exportAsJSON, exportAsSVG, exportAsJPG, exportAsPDF, exportAsXMind, exportAsDMP, exportAsExcel, exportAsMarkdown } from '../../../lib/exporters'
 import {applyLayoutStyle} from '../utils/applyLayoutStyle'
 import { importFromDMP, importFromJSON, importFromMarkdown, importFromXlsx, importFromXMind } from '../../../lib/importers'
+import { useMindmapStore } from '../store/useMindmapStore'
 
 export const Toolbar = () => {
-
+  const actions = useMindmapStore(state => state.actions);
   const handleFileUpload = (file: File) => {
     const fileType = file.name.split('.').pop()?.toLowerCase();
 
@@ -106,25 +107,25 @@ export const Toolbar = () => {
           <DropdownMenu.Content className="bg-white rounded-lg p-2 shadow-lg">
             <DropdownMenu.Item
               className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-              onSelect={() => applyLayoutStyle('left-to-right')}
+              onSelect={() => {applyLayoutStyle('left-to-right'); actions.saveState()}}
             >
               从左到右
             </DropdownMenu.Item>
             <DropdownMenu.Item
               className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-              onSelect={() => applyLayoutStyle('right-to-left')}
+              onSelect={() => {applyLayoutStyle('right-to-left'); actions.saveState()}}
             >
               从右到左
             </DropdownMenu.Item>
             <DropdownMenu.Item
               className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-              onSelect={() => applyLayoutStyle('center')}
+              onSelect={() => {applyLayoutStyle('center'); actions.saveState()}}
             >
               从中间到外
             </DropdownMenu.Item>
             <DropdownMenu.Item
               className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-              onSelect={() => applyLayoutStyle('top-to-bottom')}
+              onSelect={() => {applyLayoutStyle('top-to-bottom'); actions.saveState()}}
             >
               从上到下
             </DropdownMenu.Item>

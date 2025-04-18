@@ -20,6 +20,16 @@ export type State = {
     selectedNodeId: string | null;
     layoutStyle: 'left-to-right' | 'right-to-left' | 'center' | 'top-to-bottom'; // 新增布局风格属性
     selectedNodes: string[];
+    history: Array<{
+        nodes: Record<string, Node>; 
+        connections: string[];
+        layoutStyle: 'left-to-right' | 'right-to-left' | 'center' | 'top-to-bottom';
+    }>; // 操作历史栈
+    future: Array<{
+        nodes: Record<string, Node>; 
+        connections: string[];
+        layoutStyle: 'left-to-right' | 'right-to-left' | 'center' | 'top-to-bottom';
+    }>; // 前进操作栈
 }
 
 export type Actions = {
@@ -36,6 +46,9 @@ export type Actions = {
     setAllSelectedNodes: (id: string[]) => void;
     clearSelectedNodes: () => void;
     deleteSelectedNodes: () => void;
+    undo: () => void;
+    redo: () => void;
+    saveState: () => void;
 }
 
 export const useMindmapStore = create<State & { actions: Actions }>()(
@@ -46,7 +59,7 @@ export const useMindmapStore = create<State & { actions: Actions }>()(
                 text: '根节点',
                 position: [window.innerWidth / 2, window.innerHeight / 2 - 30],
                 children: [],
-                size: [200, 60], // 默认宽高
+                size: [88, 56], // 默认宽高
                 collapsed: false, // 默认展开
                 direction: 'none', // 新增方向属性(只在center布局中使用)
             }
@@ -55,6 +68,22 @@ export const useMindmapStore = create<State & { actions: Actions }>()(
         connections: [],
         selectedNodeId: null,
         layoutStyle: 'left-to-right', // 新增布局风格属性
+        history: [{
+            nodes: {
+                root: {
+                    id: 'root',
+                    text: '根节点',
+                    position: [window.innerWidth / 2, window.innerHeight / 2 - 30],
+                    children: [],
+                    size: [88, 56], // 默认宽高
+                    collapsed: false, // 默认展开
+                    direction: 'none', // 新增方向属性(只在center布局中使用)
+                }
+            },
+            connections: [],
+            layoutStyle: 'left-to-right', // 新增布局风格属性
+        }],
+        future: [],
         actions: {
             // 创建节点
             createNode: (parentId, position) => {
@@ -88,6 +117,9 @@ export const useMindmapStore = create<State & { actions: Actions }>()(
                         useMindmapStore.getState().actions.updateChildrenDirections();
                     }, 0);
                 }
+                setTimeout(() => {
+                    useMindmapStore.getState().actions.saveState();
+                }, 0);
             },
             // 删除节点
             deleteNode: (id) => {
@@ -106,6 +138,10 @@ export const useMindmapStore = create<State & { actions: Actions }>()(
                         node.children = node.children.filter(childId => childId !== id)
                     })
                 })
+                // useMindmapStore.getState().actions.saveState();
+                setTimeout(() => {
+                    useMindmapStore.getState().actions.saveState();
+                }, 0);
             },
             // 更新节点文本
             updateNodeText: (id, text) => {
@@ -114,6 +150,10 @@ export const useMindmapStore = create<State & { actions: Actions }>()(
                         state.nodes[id].text = text;
                     }
                 });
+                // useMindmapStore.getState().actions.saveState();
+                setTimeout(() => {
+                    useMindmapStore.getState().actions.saveState();
+                }, 0);
             },
             // 设置节点位置
             setNodePosition: (id, position) => {
@@ -122,6 +162,7 @@ export const useMindmapStore = create<State & { actions: Actions }>()(
                         state.nodes[id].position = position;
                     }
                 })
+                // useMindmapStore.getState().actions.saveState();
             },
             // 创建连接线
             createConnection: (parentId, childId) => {
@@ -130,6 +171,7 @@ export const useMindmapStore = create<State & { actions: Actions }>()(
                         state.connections.push(`${parentId}---${childId}`);
                     }
                 });
+                // useMindmapStore.getState().actions.saveState();
             },
             // 切换节点折叠状态
             toggleCollapse: (id: string) => {
@@ -138,6 +180,10 @@ export const useMindmapStore = create<State & { actions: Actions }>()(
                         state.nodes[id].collapsed = !state.nodes[id].collapsed
                     }
                 });
+                // useMindmapStore.getState().actions.saveState();
+                setTimeout(() => {
+                    useMindmapStore.getState().actions.saveState();
+                }, 0);
             },
             updateNodeSize: (id: string, size: [number, number]) => {
                 set((state) => {
@@ -145,6 +191,7 @@ export const useMindmapStore = create<State & { actions: Actions }>()(
                         state.nodes[id].size = size
                     }
                 });
+                // useMindmapStore.getState().actions.saveState();
             },
             setNodePositions: (positions: { [id: string]: [number, number] }) => {
                 set((state) => {
@@ -154,6 +201,7 @@ export const useMindmapStore = create<State & { actions: Actions }>()(
                         }
                     });
                 });
+                // useMindmapStore.getState().actions.saveState();
             },
             // 更新center布局的direction
             updateChildrenDirections: () => {
@@ -226,7 +274,65 @@ export const useMindmapStore = create<State & { actions: Actions }>()(
                 set((state) => {
                     state.selectedNodes = [];
                 })
+                // useMindmapStore.getState().actions.saveState();
+                setTimeout(() => {
+                    useMindmapStore.getState().actions.saveState();
+                }, 0);
             },
+            // 撤销操作
+            undo: () => {
+                const {history, future} = useMindmapStore.getState();
+                if(history.length > 1) {
+                    const tempHistory = structuredClone(history);
+                    const tempFuture = structuredClone(future);
+                    tempFuture.push(tempHistory[tempHistory.length - 1]);
+                    tempHistory.pop();
+                    const previousState = tempHistory[tempHistory.length - 1];
+                    console.log(JSON.parse(JSON.stringify(previousState.nodes)));
+                    set((state) => {
+                        state.nodes = previousState.nodes;
+                        state.connections = previousState.connections;
+                        state.layoutStyle = previousState.layoutStyle;
+                        state.history = structuredClone(tempHistory);
+                        state.future = structuredClone(tempFuture);
+                    });
+                }
+            },
+            // 前进操作
+            redo: () => {
+                const {history, future} = useMindmapStore.getState();
+                if(future.length > 0) {
+                    const tempHistory = structuredClone(history);
+                    const tempFuture = structuredClone(future);
+                    tempHistory.push(tempFuture[tempFuture.length - 1]);
+                    const nextState = tempFuture[tempFuture.length - 1];
+                    tempFuture.pop();
+                    set((state) => {
+                        state.nodes = nextState.nodes;
+                        state.connections = nextState.connections;
+                        state.layoutStyle = nextState.layoutStyle;
+                        state.history = structuredClone(tempHistory);
+                        state.future = structuredClone(tempFuture);
+                    });
+                }
+            },
+            // 保存当前状态到历史记录
+            saveState: () => {
+                console.log(1);
+                const {nodes, connections, layoutStyle, history} = useMindmapStore.getState();
+
+                set({
+                    history: [
+                        ...history,
+                        {
+                            nodes: structuredClone(nodes), // 深拷贝节点对象
+                            connections: [...connections],
+                            layoutStyle,
+                        },
+                    ],
+                    future: [],
+                })
+            }
         }
     }))
 )
