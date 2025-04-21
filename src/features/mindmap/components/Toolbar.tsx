@@ -266,6 +266,13 @@ const ImportModal = () => {
         default:
           throw new Error(`不支持的文件类型: ${fileType}`);
       }
+      useMindmapStore.setState({
+        history: [{
+          nodes: useMindmapStore.getState().nodes,
+          connections: useMindmapStore.getState().connections,
+          layoutStyle: useMindmapStore.getState().layoutStyle,
+        }]
+      })
     } catch (err) {
       console.error('导入失败:', err);
       message.error('导入失败，请重试！');
@@ -347,6 +354,8 @@ export const Toolbar = () => {
   const actions = useMindmapStore(state => state.actions);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const selectedNodes = useMindmapStore(state => state.selectedNodes);
+  const history = useMindmapStore(state => state.history);
+  const future = useMindmapStore(state => state.future);
 
 
   // 模拟按下 Backspace 键
@@ -439,13 +448,13 @@ export const Toolbar = () => {
         >
           {/* 回退 */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Button icon={<UndoOutlined />} />
+            <Button icon={<UndoOutlined />} disabled={history.length <= 1} onClick={() => actions.undo()}/>
             <span style={{ fontSize: '12px', marginTop: '4px' }}>回退</span>
           </div>
 
           {/* 前进 */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Button icon={<RedoOutlined />} />
+            <Button icon={<RedoOutlined />} disabled={future.length === 0} onClick={() => actions.redo()}/>
             <span style={{ fontSize: '12px', marginTop: '4px' }}>前进</span>
           </div>
 
