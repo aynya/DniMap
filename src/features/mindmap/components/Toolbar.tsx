@@ -44,7 +44,7 @@ import { useState } from 'react'
 const { Title } = Typography;
 import { excelIcon, pdfIcon, xmindIcon, mdIcon, jsonIcon, dmpIcon, jpIcon, svgIcon } from './MyIcon'
 import { UploadFile } from 'antd/es/upload/interface'
-
+import Konva from 'konva'
 
 
 
@@ -493,7 +493,21 @@ export const Toolbar = () => {
       <>
         <FloatButton.Group shape="circle" style={{ insetInlineEnd: 100 }}>
           <Tooltip title="定位到根节点" placement="left">
-            <FloatButton icon={<AimOutlined />} />
+            <FloatButton icon={<AimOutlined />} onClick={() => {
+              console.log(document.getElementById('konva-container'));
+              const container = document.getElementById('konva-container');
+              if(!container) {
+                console.error('Container not found!');
+                return;
+              }
+              const stage = Konva.stages.find((s) => s.container() === container);
+              if(!stage) {
+                console.error('Stage not found!');
+                return;
+              }
+              stage.position({ x: 0, y: 0});
+              stage.scale({ x: 1, y: 1 });
+            }}/>
           </Tooltip>
         </FloatButton.Group>
         <FloatButton.Group shape="circle" style={{ insetInlineEnd: 25 }}>
