@@ -345,38 +345,23 @@ const ImportModal = () => {
 
 export const Toolbar = () => {
   const actions = useMindmapStore(state => state.actions);
-
-  // const handleFileUpload = (file: File) => {
-  //   const fileType = file.name.split('.').pop()?.toLowerCase();
-
-  //   switch (fileType) {
-  //     case 'xlsx':
-  //       importFromXlsx(file);
-  //       break;
-  //     case 'md':
-  //       importFromMarkdown(file);
-  //       break;
-  //     case 'xmind':
-  //       importFromXMind(file);
-  //       break;
-  //     case 'json':
-  //       importFromJSON(file);
-  //       break;
-  //     case 'dmp':
-  //       importFromDMP(file);
-  //       break;
-  //   }
-  // }
-
-
-
-
-
-
-
-
-
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const selectedNodes = useMindmapStore(state => state.selectedNodes);
+
+
+  // 模拟按下 Backspace 键
+  const simulateBackspaceKeyPress = () => {
+    const keyboardEvent = new KeyboardEvent('keydown', {
+      key: 'Backspace',
+      code: 'Backspace',
+      keyCode: 8,
+      which: 8,
+      bubbles: true,
+      cancelable: true,
+    });
+
+    document.dispatchEvent(keyboardEvent); // 分发事件到文档
+  };
 
 
   // 对话框中的结构选项
@@ -466,17 +451,17 @@ export const Toolbar = () => {
 
           {/* 删除 */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Button icon={<DeleteOutlined />} danger />
+            <Button icon={<DeleteOutlined />} danger disabled={selectedNodes.length === 0} onClick={() => {simulateBackspaceKeyPress()}}/>
             <span style={{ fontSize: '12px', marginTop: '4px', color: '#ff4d4f' }}>删除</span>
           </div>
 
-          {/* 添加文件 */}
+          {/* 新建 */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Button icon={<FileAddOutlined />} />
             <span style={{ fontSize: '12px', marginTop: '4px' }}>新建</span>
           </div>
 
-          {/* 文件 */}
+          {/* 打开 */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Button icon={<FileOutlined />} />
             <span style={{ fontSize: '12px', marginTop: '4px' }}>打开</span>
@@ -546,85 +531,6 @@ export const Toolbar = () => {
 
     </div>
 
-
-
-    // <div className="fixed top-4 left-4 flex gap-2">
-    //   <DropdownMenu.Root>
-    //     <DropdownMenu.Trigger className="px-4 py-2 bg-white rounded-lg shadow">
-    //       文件
-    //     </DropdownMenu.Trigger>
-
-    //     <DropdownMenu.Portal>
-    //       <DropdownMenu.Content className="bg-white rounded-lg p-2 shadow-lg">
-    //         <DropdownMenu.Item
-    //           className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-    //           onSelect={() => exportAsJSON()}
-    //         >
-    //           导出JSON
-    //         </DropdownMenu.Item>
-    //         <DropdownMenu.Item
-    //           className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-    //           onSelect={() => exportAsPNG()}
-    //         >
-    //           导出png
-    //         </DropdownMenu.Item>
-    //         <DropdownMenu.Item
-    //           className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-    //           onSelect={() => exportAsSVG()}
-    //         >
-    //           导出svg
-    //         </DropdownMenu.Item>
-    //         <DropdownMenu.Item
-    //           className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-    //           onSelect={() => exportAsJPG()}
-    //         >
-    //           导出jpg
-    //         </DropdownMenu.Item>
-    //         <DropdownMenu.Item
-    //           className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-    //           onSelect={() => exportAsPDF()}
-    //         >
-    //           导出pdf
-    //         </DropdownMenu.Item>
-    //         <DropdownMenu.Item
-    //           className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-    //           onSelect={() => exportAsXMind()}
-    //         >
-    //           导出xmind
-    //         </DropdownMenu.Item>
-    //         <DropdownMenu.Item
-    //           className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-    //           onSelect={() => exportAsDMP()}
-    //         >
-    //           导出专有文件
-    //         </DropdownMenu.Item>
-
-    //         <DropdownMenu.Item
-    //           className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-    //           onSelect={() => exportAsExcel()}
-    //         >
-    //           导出Excel
-    //         </DropdownMenu.Item>
-    //         <DropdownMenu.Item
-    //           className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-    //           onSelect={() => exportAsMarkdown()}
-    //         >
-    //           导出markdown
-    //         </DropdownMenu.Item>
-    //       </DropdownMenu.Content>
-    //     </DropdownMenu.Portal>
-
-
-    //   </DropdownMenu.Root>
-
-
-    //   <input type="file" onChange={(e) => {
-    //     const file = e.target.files?.[0];
-    //     if(file) {
-    //       handleFileUpload(file);
-    //     }
-    //   }}/>
-    // </div>
   )
 }
 export default Toolbar
