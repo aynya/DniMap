@@ -1,7 +1,7 @@
 import { exportAsPNG, exportAsJSON, exportAsSVG, exportAsJPG, exportAsPDF, exportAsXMind, exportAsDMP, exportAsExcel, exportAsMarkdown } from '../../../lib/exporters'
 import { applyLayoutStyle } from '../utils/applyLayoutStyle'
 import { importFromDMP, importFromJSON, importFromMarkdown, importFromXlsx, importFromXMind } from '../../../lib/importers'
-import { useMindmapStore } from '../store/useMindmapStore'
+import { useMindmapStore, Node } from '../store/useMindmapStore'
 import '@ant-design/v5-patch-for-react-19';
 import {
   Button,
@@ -19,7 +19,7 @@ import {
   Row,
   Col,
   Upload,
-
+  Tree,
 
 } from 'antd'
 import {
@@ -347,6 +347,104 @@ const ImportModal = () => {
 
 
 
+const Outline = () => {
+  const [outlineVisible, setOutlineVisible] = useState(false);
+
+  // 获取 Stage 实例
+  const getStageFromContainer = () => {
+    const container = document.getElementById('konva-container');
+    if (!container) {
+      console.error('Container not found!');
+      return null;
+    }
+
+    const stage = Konva.stages.find((s) => s.container() === container);
+    if (!stage) {
+      console.error('Stage not found!');
+      return null;
+    }
+
+    return stage;
+  };
+
+  interface TreeDataItem {
+    title: string;
+    key: string;
+    children?: TreeDataItem[];
+  }
+
+  // 递归生成 Tree 数据
+  const generateTreeData = (nodes: Record<string, Node>, rootId: string): TreeDataItem[] => {
+    const rootNode = nodes[rootId];
+    if (!rootNode) return [];
+
+    return [
+      {
+        title: rootNode.text,
+        key: rootNode.id,
+        children: rootNode.children.map((childId) => generateTreeData(nodes, childId)).flat(),
+      },
+    ];
+  };
+
+  // 从 store 中获取 nodes 数据
+  const { nodes } = useMindmapStore.getState();
+  const treeData = generateTreeData(nodes, 'root'); // 假设根节点 ID 为 'root'
+
+  // 处理节点点击事件
+  const handleNodeClick = (selectedKeys: string[]) => {
+    const nodeId = selectedKeys[0];
+    const stage = getStageFromContainer();
+
+    if (stage && nodes[nodeId]) {
+      const nodePosition = nodes[nodeId].position;
+      const rootNodePosition = nodes['root'].position;
+      stage.scale({ x: 1, y: 1 });
+      stage.position({ x: -nodePosition[0] + rootNodePosition[0], y: -nodePosition[1] + rootNodePosition[1]}); // 调整视图到节点位置
+      stage.batchDraw(); // 触发重绘
+    }
+  };
+
+  return (
+    <>
+      {/* 悬浮按钮 */}
+      <Tooltip title="大纲" placement="left">
+        <FloatButton
+          icon={<MenuUnfoldOutlined />}
+          onClick={() => setOutlineVisible(!outlineVisible)} // 切换大纲显示状态
+        />
+      </Tooltip>
+
+      {/* 大纲面板 */}
+      {outlineVisible && (
+        <div
+          style={{
+            position: 'absolute',
+            height: 300,
+            right: 50,
+            width: 300,
+            background: '#fff',
+            padding: 16,
+            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+            zIndex: 1000,
+            overflowY: 'auto',
+            overflowX: 'auto',
+          }}
+        >
+          <Tree
+            showLine
+            defaultExpandAll
+            onSelect={(selectedKeys) => handleNodeClick(selectedKeys as string[])}
+            treeData={treeData}
+          />
+        </div>
+      )}
+    </>
+  );
+}
+
+
+
 
 
 
@@ -448,19 +546,19 @@ export const Toolbar = () => {
         >
           {/* 回退 */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Button icon={<UndoOutlined />} disabled={history.length <= 1} onClick={() => actions.undo()}/>
+            <Button icon={<UndoOutlined />} disabled={history.length <= 1} onClick={() => actions.undo()} />
             <span style={{ fontSize: '12px', marginTop: '4px' }}>回退</span>
           </div>
 
           {/* 前进 */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Button icon={<RedoOutlined />} disabled={future.length === 0} onClick={() => actions.redo()}/>
+            <Button icon={<RedoOutlined />} disabled={future.length === 0} onClick={() => actions.redo()} />
             <span style={{ fontSize: '12px', marginTop: '4px' }}>前进</span>
           </div>
 
           {/* 删除 */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Button icon={<DeleteOutlined />} danger disabled={selectedNodes.length === 0} onClick={() => {simulateBackspaceKeyPress()}}/>
+            <Button icon={<DeleteOutlined />} danger disabled={selectedNodes.length === 0} onClick={() => { simulateBackspaceKeyPress() }} />
             <span style={{ fontSize: '12px', marginTop: '4px', color: '#ff4d4f' }}>删除</span>
           </div>
 
@@ -496,18 +594,18 @@ export const Toolbar = () => {
             <FloatButton icon={<AimOutlined />} onClick={() => {
               console.log(document.getElementById('konva-container'));
               const container = document.getElementById('konva-container');
-              if(!container) {
+              if (!container) {
                 console.error('Container not found!');
                 return;
               }
               const stage = Konva.stages.find((s) => s.container() === container);
-              if(!stage) {
+              if (!stage) {
                 console.error('Stage not found!');
                 return;
               }
-              stage.position({ x: 0, y: 0});
+              stage.position({ x: 0, y: 0 });
               stage.scale({ x: 1, y: 1 });
-            }}/>
+            }} />
           </Tooltip>
         </FloatButton.Group>
         <FloatButton.Group shape="circle" style={{ insetInlineEnd: 25 }}>
@@ -520,9 +618,10 @@ export const Toolbar = () => {
           <Tooltip title="结构" placement="left">
             <FloatButton icon={<ClusterOutlined />} onClick={showModal} />
           </Tooltip>
-          <Tooltip title="大纲" placement="left">
+          {/* <Tooltip title="大纲" placement="left">
             <FloatButton icon={<MenuUnfoldOutlined />} />
-          </Tooltip>
+          </Tooltip> */}
+          {Outline()}
           <Tooltip title="快捷键" placement="left">
             <FloatButton icon={<ControlOutlined />} />
           </Tooltip>
