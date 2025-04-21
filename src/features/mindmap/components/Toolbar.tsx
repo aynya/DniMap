@@ -5,13 +5,13 @@ import { applyLayoutStyle } from '../utils/applyLayoutStyle'
 import { importFromDMP, importFromJSON, importFromMarkdown, importFromXlsx, importFromXMind } from '../../../lib/importers'
 import { useMindmapStore } from '../store/useMindmapStore'
 import '@ant-design/v5-patch-for-react-19';
-import { 
-  Button, 
-  FloatButton, 
-  Tooltip, 
-  Modal, 
-  Card, 
-  Image, 
+import {
+  Button,
+  FloatButton,
+  Tooltip,
+  Modal,
+  Card,
+  Image,
   Typography,
   Form,
   Input,
@@ -19,6 +19,8 @@ import {
   Checkbox,
   message,
   Space,
+  Row,
+  Col,
 
 } from 'antd'
 import {
@@ -36,11 +38,11 @@ import {
   MenuUnfoldOutlined,
   ControlOutlined,
   AimOutlined,
-  
+
 } from '@ant-design/icons'
 import { useState } from 'react'
-const {Title} = Typography;
-import {excelIcon, pdfIcon, xmindIcon, mdIcon, jsonIcon, dmpIcon, jpIcon, svgIcon} from './MyIcon'
+const { Title } = Typography;
+import { excelIcon, pdfIcon, xmindIcon, mdIcon, jsonIcon, dmpIcon, jpIcon, svgIcon } from './MyIcon'
 
 
 
@@ -50,6 +52,9 @@ import {excelIcon, pdfIcon, xmindIcon, mdIcon, jsonIcon, dmpIcon, jpIcon, svgIco
 const ExportModal = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
+  const [selectedFormat, setSelectedFormat] = useState('json');
+  const [checkImage, setCheckImage] = useState('png');
+
 
   const showModal = () => {
     setIsModalVisible(true);
@@ -59,12 +64,62 @@ const ExportModal = () => {
     setIsModalVisible(false);
   };
 
-  const onFinish = (values: unknown) => {
+  const onFinish = (values: {fileName: string}) => {
     console.log('Received values of form: ', values);
+    console.log('Selected format: ', selectedFormat);
+
+    try {
+      switch(selectedFormat) {
+        case 'json':
+          exportAsJSON(values.fileName);
+          break;
+        case 'image':
+          if (checkImage === 'png') {
+            exportAsPNG(values.fileName);
+          } else {
+            exportAsJPG(values.fileName);
+          }
+          break;
+        case 'svg':
+          exportAsSVG(values.fileName);
+          break;
+        case 'pdf':
+          exportAsPDF(values.fileName);
+          break;
+        case 'markdown':
+          exportAsMarkdown(values.fileName);
+          break;
+        case 'excel':
+          exportAsExcel(values.fileName);
+          break;
+        case 'xmind':
+          exportAsXMind(values.fileName);
+          break;
+        case 'dmp':
+          exportAsDMP(values.fileName);
+
+      }
+    } catch (err) {
+      console.error('导出失败:', err);
+      message.error('导出失败，请重试！');
+      return;
+    }
+
     // 这里可以添加导出逻辑
     message.success('导出成功！');
     setIsModalVisible(false);
   };
+
+  const formatOptions = [
+    { value: 'json', label: 'JSON', icon: jsonIcon(), description: '数据交换格式文件' },
+    { value: 'image', label: '图片', icon: jpIcon(), description: '常用图片格式，适合查看分享' },
+    { value: 'svg', label: 'SVG', icon: svgIcon(), description: '可缩放矢量图形文件' },
+    { value: 'pdf', label: 'PDF', icon: pdfIcon(), description: '适合查看浏览和打印' },
+    { value: 'markdown', label: 'Markdown', icon: mdIcon(), description: '轻量级标记语言文件' },
+    { value: 'excel', label: 'Excel', icon: excelIcon(), description: '电子表格文件' },
+    { value: 'xmind', label: 'XMind', icon: xmindIcon(), description: 'XMind软件格式' },
+    { value: 'dmp', label: '专有文件', icon: dmpIcon(), description: 'DniMap私有格式，可用于再次导入，客户端可直接编辑' },
+  ];
 
   return (
     <>
@@ -88,8 +143,9 @@ const ExportModal = () => {
             确定
           </Button>,
         ]}
+        width={800} // 设置弹窗宽度
       >
-        <Form form={form} name="exportForm" onFinish={onFinish}>
+        <Form form={form} name="exportForm" onFinish={onFinish} initialValues={{ fileName: 'myMindMap'}}>
           <Form.Item
             label="导出文件名称"
             name="fileName"
@@ -98,52 +154,71 @@ const ExportModal = () => {
             <Input placeholder="请输入文件名" />
           </Form.Item>
 
-          <Form.Item label="格式">
-            <Radio.Group name="format">
-              <Space direction="vertical">
-                <Radio value="json">
-                  {jsonIcon()}
-                  JSON
-                </Radio>
-                <Radio value="image">
-                  {jpIcon()}
-                  图片
-                  <Checkbox.Group style={{ marginLeft: 8 }}>
-                    <Checkbox value="png">PNG</Checkbox>
-                    <Checkbox value="jpg">JPG</Checkbox>
-                  </Checkbox.Group>
-                </Radio>
-                <Radio value="svg">
-                  {svgIcon()}
-                  SVG
-                </Radio>
-                <Radio value="pdf">
-                  {pdfIcon()}
-                  PDF
-                </Radio>
-                <Radio value="markdown">
-                  {mdIcon()}
-                  Markdown
-                </Radio>
-                <Radio value="excel">
-                  {excelIcon()}
-                  Excel
-                </Radio>
-                <Radio value="xmind">
-                  {xmindIcon()}
-                  XMind
-                </Radio>
-                <Radio value="dmp">
-                  {dmpIcon()}
-                  专有文件
-                </Radio>
-              </Space>
-            </Radio.Group>
-          </Form.Item>
+          <Row gutter={16}>
+            {/* 左侧格式选择 */}
+            <Col span={8}>
+              <div style={{ maxHeight: 300, overflowY: 'auto', borderRight: '1px solid #ddd', paddingRight: 16 }}>
+                <Form.Item label="格式">
+                  <Radio.Group
+                    name="format"
+                    onChange={(e) => setSelectedFormat(e.target.value)}
+                    value={selectedFormat}
+                  >
+                    <Space direction="vertical">
+                      {formatOptions.map((option) => (
+                        <Radio
+                          key={option.value}
+                          value={option.value}
+                          style={{ display: 'flex', alignItems: 'center' }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <span style={{ marginRight: 8, display: 'inline-flex', alignItems: 'center', height: 50, lineHeight: '50px' }}>
+                              {option.icon}
+                            </span>
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                height: 50, // 设置高度与图标一致
+                                lineHeight: '50px', // 垂直居中文本
+                                marginLeft: 8,
+                              }}
+                            >
+                              {option.label}
+                            </span>
+                          </div>
+                        </Radio>
+                      ))}
+                    </Space>
+                  </Radio.Group>
+                </Form.Item>
+              </div>
+            </Col>
 
-          <Form.Item label="选项">
-            <Checkbox>是否包含主题、结构等配置数据</Checkbox>
-          </Form.Item>
+            {/* 右侧格式说明 */}
+            <Col span={16}>
+              <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+                {selectedFormat && (
+                  <Form.Item label="说明">
+                    {formatOptions.find((option) => option.value === selectedFormat)?.description}
+                  </Form.Item>
+                )}
+
+                {/* 根据格式显示额外选项 */}
+                {selectedFormat === 'image' && (
+                  <Form.Item label="图片格式" >
+                    <Radio.Group
+                      name="imageFormat"
+                      onChange={(e) => setCheckImage(e.target.value)}
+                      value={checkImage}
+                    >
+                      <Radio value="png" >PNG</Radio>
+                      <Radio value="jpg">JPG</Radio>
+                    </Radio.Group>
+                  </Form.Item>
+                )}
+              </div>
+            </Col>
+          </Row>
         </Form>
       </Modal>
     </>
@@ -197,7 +272,7 @@ export const Toolbar = () => {
 
 
   const [isModalVisible, setIsModalVisible] = useState(false);
-  
+
 
   // 对话框中的结构选项
   const structureOptions = [
@@ -232,16 +307,16 @@ export const Toolbar = () => {
   // 处理结构选择
   const handleStructureSelect = (title: string) => {
     console.log(`选择了结构: ${title}`);
-    if(title === 'left-to-right') {
-      applyLayoutStyle('left-to-right'); 
+    if (title === 'left-to-right') {
+      applyLayoutStyle('left-to-right');
       actions.saveState();
-    } else if(title === 'right-to-left') {
+    } else if (title === 'right-to-left') {
       applyLayoutStyle('right-to-left');
       actions.saveState();
-    } else if(title === 'center') {
+    } else if (title === 'center') {
       applyLayoutStyle('center');
       actions.saveState();
-    } else if(title === 'top-to-bottom') {
+    } else if (title === 'top-to-bottom') {
       applyLayoutStyle('top-to-bottom');
       actions.saveState();
     }
@@ -333,7 +408,7 @@ export const Toolbar = () => {
             <FloatButton icon={<LayoutOutlined />} />
           </Tooltip>
           <Tooltip title="结构" placement="left">
-            <FloatButton icon={<ClusterOutlined />} onClick={showModal}/>
+            <FloatButton icon={<ClusterOutlined />} onClick={showModal} />
           </Tooltip>
           <Tooltip title="大纲" placement="left">
             <FloatButton icon={<MenuUnfoldOutlined />} />

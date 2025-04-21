@@ -170,7 +170,7 @@ const generateStage = () => {
  * 导出为专有文件dmp格式
  * @returns void
  */
-export const exportAsDMP = () => {
+export const exportAsDMP = (fileName: string) => {
     const state = useMindmapStore.getState();
 
     // 构造最终导出的数据
@@ -182,7 +182,7 @@ export const exportAsDMP = () => {
     }, null, 2);
 
     const blob = new Blob([data], {type: 'application/dmp'});
-    saveAs(blob, 'mindmap.dmp');
+    saveAs(blob, `${fileName}.dmp`);
 }
 
 
@@ -193,7 +193,7 @@ export const exportAsDMP = () => {
  * 导出为 JSON 文件
  * @returns void
  */
-export const exportAsJSON = () => {
+export const exportAsJSON = (fileName: string) => {
     const state = useMindmapStore.getState();
 
     // 递归构建分层节点结构
@@ -226,14 +226,14 @@ export const exportAsJSON = () => {
 
     // 创建 Blob 并保存文件
     const blob = new Blob([data], { type: 'application/json' });
-    saveAs(blob, 'mindmap.json');
+    saveAs(blob, `${fileName}.json`);
 };
 
 /**
  * 导出为png
  * @returns void
  */
-export const exportAsPNG = () => {
+export const exportAsPNG = (fileName: string) => {
     const result = generateStage();
     if (!result) return;
 
@@ -248,7 +248,7 @@ export const exportAsPNG = () => {
         // 创建下载链接
         const link = document.createElement('a');
         link.href = dataUrl;
-        link.download = 'mindmap.png';
+        link.download = `${fileName}.png`;
         link.click();
     } finally {
         // 清理临时资源
@@ -262,7 +262,7 @@ export const exportAsPNG = () => {
  * 导出为jpg
  * @returns void
  */
-export const exportAsJPG = () => {
+export const exportAsJPG = (fileName: string) => {
     const result = generateStage();
     if (!result) return;
 
@@ -277,7 +277,7 @@ export const exportAsJPG = () => {
 
         const link = document.createElement('a');
         link.href = dataUrl;
-        link.download = 'mindmap.jpg';
+        link.download = `${fileName}.jpg`;
         link.click();
     } finally {
         // 清理临时资源
@@ -290,7 +290,7 @@ export const exportAsJPG = () => {
  * 导出为 PDF
  * @returns void
  */
-export const exportAsPDF = () => {
+export const exportAsPDF = (fileName: string) => {
     // 生成临时 Stage
     const result = generateStage();
     if (!result) return;
@@ -324,7 +324,7 @@ export const exportAsPDF = () => {
         pdf.addImage(dataUrl, 'PNG', 0, 0, stageWidthPx, stageHeightPx);
 
         // 下载 PDF 文件
-        pdf.save('mindmap.pdf');
+        pdf.save(`${fileName}.pdf`);
     } finally {
         // 清理临时资源
         stage.destroy();
@@ -336,7 +336,7 @@ export const exportAsPDF = () => {
  * 导出为 SVG
  * @returns void
  */
-export const exportAsSVG = async () => {
+export const exportAsSVG = async (fileName: string) => {
     // 生成临时 Stage
     const result = generateStage();
     if (!result) return;
@@ -358,7 +358,7 @@ export const exportAsSVG = async () => {
         const blob = new Blob([svgContent], { type: 'image/svg+xml' });
 
         // 下载 SVG 文件
-        saveAs(blob, 'mindmap.svg');
+        saveAs(blob, `${fileName}.svg`);
     } catch (error) {
         console.error('导出 SVG 时出错:', error);
     } finally {
@@ -522,7 +522,7 @@ const createManifestJSON = (): ManifestJSON => {
 };
 
 // 导出为 XMind 文件
-export const exportAsXMind = (): void => {
+export const exportAsXMind = (fileName: string): void => {
     try {
         // 获取节点数据
         const { nodes } = useMindmapStore.getState();
@@ -550,7 +550,7 @@ export const exportAsXMind = (): void => {
 
         // 生成并下载文件
         zip.generateAsync({ type: 'blob', compression: 'DEFLATE' }).then((blob) => {
-            saveAs(blob, 'mindmap.xmind');
+            saveAs(blob, `${fileName}.xmind`);
         });
     } catch (error) {
         console.error('导出失败:', error);
@@ -570,7 +570,7 @@ export const exportAsXMind = (): void => {
  * 导出为 Excel
  * @returns void
  */
-export const exportAsExcel = () => {
+export const exportAsExcel = (fileName: string) => {
     const state = useMindmapStore.getState();
     const { nodes, connections, selectedNodeId, layoutStyle } = state;
 
@@ -614,7 +614,7 @@ export const exportAsExcel = () => {
     XLSX.utils.book_append_sheet(workbook, globalStateWorksheet, 'Global State');
 
     // 导出文件
-    XLSX.writeFile(workbook, 'mindmap_data.xlsx');
+    XLSX.writeFile(workbook, `${fileName}.xlsx`);
 }
 
 
@@ -623,7 +623,7 @@ export const exportAsExcel = () => {
  * 导出markdown
  * @returns void
  */
-export const exportAsMarkdown = () => {
+export const exportAsMarkdown = (fileName: string) => {
     const state = useMindmapStore.getState();
     const { nodes } = state;
 
@@ -664,6 +664,6 @@ export const exportAsMarkdown = () => {
 
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'mindmap.md';
+    a.download = `${fileName}.md`;
     a.click();
 }
