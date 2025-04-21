@@ -1,5 +1,3 @@
-// src/features/mindmap/components/Toolbar.tsx
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { exportAsPNG, exportAsJSON, exportAsSVG, exportAsJPG, exportAsPDF, exportAsXMind, exportAsDMP, exportAsExcel, exportAsMarkdown } from '../../../lib/exporters'
 import { applyLayoutStyle } from '../utils/applyLayoutStyle'
 import { importFromDMP, importFromJSON, importFromMarkdown, importFromXlsx, importFromXMind } from '../../../lib/importers'
@@ -16,11 +14,12 @@ import {
   Form,
   Input,
   Radio,
-  Checkbox,
   message,
   Space,
   Row,
   Col,
+  Upload,
+
 
 } from 'antd'
 import {
@@ -38,11 +37,13 @@ import {
   MenuUnfoldOutlined,
   ControlOutlined,
   AimOutlined,
+  InboxOutlined,
 
 } from '@ant-design/icons'
 import { useState } from 'react'
 const { Title } = Typography;
 import { excelIcon, pdfIcon, xmindIcon, mdIcon, jsonIcon, dmpIcon, jpIcon, svgIcon } from './MyIcon'
+import { UploadFile } from 'antd/es/upload/interface'
 
 
 
@@ -64,12 +65,12 @@ const ExportModal = () => {
     setIsModalVisible(false);
   };
 
-  const onFinish = (values: {fileName: string}) => {
+  const onFinish = (values: { fileName: string }) => {
     console.log('Received values of form: ', values);
     console.log('Selected format: ', selectedFormat);
 
     try {
-      switch(selectedFormat) {
+      switch (selectedFormat) {
         case 'json':
           exportAsJSON(values.fileName);
           break;
@@ -105,7 +106,7 @@ const ExportModal = () => {
       return;
     }
 
-    // 这里可以添加导出逻辑
+
     message.success('导出成功！');
     setIsModalVisible(false);
   };
@@ -145,7 +146,7 @@ const ExportModal = () => {
         ]}
         width={800} // 设置弹窗宽度
       >
-        <Form form={form} name="exportForm" onFinish={onFinish} initialValues={{ fileName: 'myMindMap'}}>
+        <Form form={form} name="exportForm" onFinish={onFinish} initialValues={{ fileName: 'myMindMap' }}>
           <Form.Item
             label="导出文件名称"
             name="fileName"
@@ -227,7 +228,111 @@ const ExportModal = () => {
 
 
 
+const ImportModal = () => {
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [form] = Form.useForm();
 
+  const showModal = () => {
+    form.setFieldsValue({ file: [] });
+    setIsModalVisible(true);
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+  };
+
+  const onFinish = async (values: { file: UploadFile[] }) => {
+    console.log('Received values of form: ', values);
+    try {
+      const fileName = values.file[0].name;
+      const file = values.file[0].originFileObj as File; // 获取文件对象
+      const fileType = fileName.split('.').pop()?.toLowerCase();
+      switch (fileType) {
+        case 'dmp':
+          await importFromDMP(file);
+          break;
+        case 'json':
+          await importFromJSON(file);
+          break;
+        case 'md':
+          await importFromMarkdown(file);
+          break;
+        case 'xmind':
+          await importFromXMind(file);
+          break;
+        case 'xlsx':
+          await importFromXlsx(file);
+          break;
+        default:
+          throw new Error(`不支持的文件类型: ${fileType}`);
+      }
+    } catch (err) {
+      console.error('导入失败:', err);
+      message.error('导入失败，请重试！');
+      return;
+    }
+
+
+
+    message.success('导入成功！');
+    setIsModalVisible(false);
+  };
+
+  return (
+    <>
+      {/* 导入按钮 */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <Button icon={<ImportOutlined />} onClick={showModal} />
+        <span style={{ fontSize: '12px', marginTop: '4px' }}>导入</span>
+      </div>
+
+      {/* 导入对话框 */}
+      <Modal
+        title="导入"
+        open={isModalVisible}
+        onOk={() => form.submit()}
+        onCancel={handleCancel}
+        footer={[
+          <Button key="cancel" onClick={handleCancel}>
+            取消
+          </Button>,
+          <Button key="submit" type="primary" onClick={() => form.submit()}>
+            确定
+          </Button>,
+        ]}
+        width={400} // 设置弹窗宽度
+      >
+        <Form form={form} name="importForm" onFinish={onFinish}>
+          <Form.Item
+            name="file"
+            valuePropName="fileList"
+            getValueFromEvent={(e) => {
+              if (Array.isArray(e)) {
+                return e.slice(0, 1); // 限制为单个文件
+              }
+              return e && e.fileList.slice(0, 1); // 限制为单个文件
+            }}
+            rules={[{ required: true, message: '请选择一个文件!' }]}
+          >
+            <Upload.Dragger
+              name="file"
+              multiple={false}
+              beforeUpload={() => false} // 阻止自动上传
+              accept=".dmp, .json, .md, .xlsx, .xmind"
+              style={{ textAlign: 'center' }}
+            >
+              <p className="ant-upload-drag-icon">
+                <InboxOutlined />
+              </p>
+              <p className="ant-upload-text">点击或拖拽文件到这里上传</p>
+              <p className="ant-upload-hint">支持.dmp, .json, .md, .xlsx, .xmind文件</p>
+            </Upload.Dragger>
+          </Form.Item>
+        </Form>
+      </Modal>
+    </>
+  );
+};
 
 
 
@@ -384,10 +489,7 @@ export const Toolbar = () => {
           </div>
 
           {/* 导入 */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Button icon={<ImportOutlined />} />
-            <span style={{ fontSize: '12px', marginTop: '4px' }}>导入</span>
-          </div>
+          {ImportModal()}
 
           {/* 导出 */}
           {ExportModal()}
