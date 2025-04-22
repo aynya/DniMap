@@ -1,54 +1,14 @@
-# React + TypeScript + Vite
+# DniMap - 在线思维导图工具
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**技术栈**：TypeScript + React + Zustand + Konva.js
 
-Currently, two official plugins are available:
+**技术亮点**：
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+- 采用坐标系转换与动态偏移计算实现以鼠标为中心的精准画布缩放
+- 采用DOM与Konva混合方案实现了Konva画布中文本的丝滑编辑和无缝衔接
+- 将移动端原生交互体验（惯性滚动）移植到Canvas渲染体系，通过速度向量追踪-物理衰减模型-动画帧优化三重技术栈，提升了画布拖拽的流畅度
+- 设计并实现基于分层递归的多叉树布局算法，支持4向（左/右/中心/上下）布局，通过双阶段（预计算 + 定位）实现O(n)动态布局，支持折叠/动态尺寸
+- 基于二次贝塞尔曲线动态计算控制点，实现节点间平滑优雅连线，自适应折叠/尺寸变化
+- 采用虚拟重绘技术实现对画布内容的精准导出为JPG/PNG/PDF/SVG
+- 集成jszip、xlsx等第三方库实现多种格式的导入与导出，如.json、.md、.xlsx、.xmind，并提供专有格式.dmp
+- 使用Zustand管理用户状态，并与localforage集成，实现无感知自动持久化模式，保证流畅度的同时达成本地数据的可靠性
