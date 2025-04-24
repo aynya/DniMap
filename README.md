@@ -1,14 +1,47 @@
 # DniMap - 在线思维导图工具
+DniMap是一个基于TypeScript + React + Zustand + Konva.js构建的思维导图工具
 
-**技术栈**：TypeScript + React + Zustand + Konva.js
+# 主要功能
+- 🎨 画布操作
+  - ✅ 支持以鼠标为中心的画布缩放
+  - ✅ 支持惯性滚动与流畅拖拽
+  - ✅ 支持导出为JPG/PNG/PDF/SVG
+  - ✅ 大纲索引节点
+- 📝 文本与编辑
+  - ✅ 支持节点原地编辑添加
+  - ✅ 支持多种格式导入导出（.json/.md/.xlsx/.xmind/.dmp）
+  - ✅ 支持撤销重做功能
+  - 🚧 快捷键操作
+  - ❌ 打开文件另存为
+  - ❌ 个性化操作（主题/样式）
+- 📊 布局与连线
+  - ✅ 支持四种树布局结构（left-to-right/right-to-left/center/top-to-bottom）
+  - ✅ 动态折叠与尺寸调整
+  - ✅ 平滑节点连线
+- 💾 数据管理
+  - ✅ localforage持久化无感知自动保存
 
-**技术亮点**：
+# 技术栈
+### 前端
+- React + Vite: 高性能的前端开发框架。
+- TypeScript: 强类型语言，提升代码可读性和开发效率，减少运行时错误。
+- Zustand: 轻量级状态管理库，与 localforage 集成实现自动持久化。
+- Konva.js: 专注于 Canvas 的 2D 图形渲染库，支持复杂的画布操作（如缩放、拖拽、文本编辑等）。
+- Ant Design: 企业级 UI 组件库，加速界面开发。
 
-- 采用坐标系转换与动态偏移计算实现以鼠标为中心的精准画布缩放
-- 采用DOM与Konva混合方案实现了Konva画布中文本的丝滑编辑和无缝衔接
-- 将移动端原生交互体验（惯性滚动）移植到Canvas渲染体系，通过速度向量追踪-物理衰减模型-动画帧优化三重技术栈，提升了画布拖拽的流畅度
-- 设计并实现基于分层递归的多叉树布局算法，支持4向（左/右/中心/上下）布局，通过双阶段（预计算 + 定位）实现O(n)动态布局，支持折叠/动态尺寸
-- 基于二次贝塞尔曲线动态计算控制点，实现节点间平滑优雅连线，自适应折叠/尺寸变化
-- 采用虚拟重绘技术实现对画布内容的精准导出为JPG/PNG/PDF/SVG
-- 集成jszip、xlsx等第三方库实现多种格式的导入与导出，如.json、.md、.xlsx、.xmind，并提供专有格式.dmp
-- 使用Zustand管理用户状态，并与localforage集成，实现无感知自动持久化模式，保证流畅度的同时达成本地数据的可靠性
+# 开发环境设置
+1. 克隆仓库
+```bash
+git clone https://github.com/aynya/DniMap.git
+```
+
+2. 安装依赖
+```bash
+cd DniMap
+npm install
+```
+
+3. 启动
+```bash
+npm run dev
+```
